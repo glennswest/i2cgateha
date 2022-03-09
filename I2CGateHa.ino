@@ -32,7 +32,7 @@ void TCA9548A(uint8_t bus)
 }
  
 
-void register_device(uint8_t bus, uint8_t addr)
+void register_device(uint8_t port, uint8_t bus, uint8_t addr)
 {
 
 
@@ -40,66 +40,48 @@ void register_device(uint8_t bus, uint8_t addr)
 
 void scanswitch()
 {
+char logb[128];
+
   TCA9548A(0);
-  
+  uint8_t port = 0;
   
   for(uint8_t bus = 0; bus < 8; bus++){
-    Serial.print("Scanning switch\n");
-    Serial.println(bus);
+    log("Device Discovery\n");
     TCA9548A(bus);
     for (uint8_t addr = 0;addr <= 127; addr++){
       Wire1.beginTransmission(addr); // Check for 4 port relay
       int result = Wire1.endTransmission();
       if (result == 0){
-         Serial.print("Device Detected - ");
-         Serial.print("Port ");
-         Serial.print(bus);
-         Serial.print(" Addr: 0x");
-         Serial.println(addr,HEX);
-         register_device(bus,addr);
+         sprintf(logb,"Port %d - Bus %d - Addr %xd",port,bus,addr);
+         log(logb);
+         register_device(port,bus,addr);
          }
         delay(100); 
         }
     }
 }
 
-boolean check_for_switch(){
-    Wire1.beginTransmission((0x70 << 1) + 1);
-    int result = Wire1.endTransmission();
-    Serial.print("Is Switch Presence? ");
-    Serial.print(result);
-    Serial.print("\n");
-    if (result == 2){
-      Serial.print("Switch is present\n");
-      scanswitch();
-      return true;
-    } else { 
-      return false;
-    }
-}
-    
-
-void clog_setup() {
-
-
-}
 
 void reconnect() {
+  static int scan_needed = 1;
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    log("Attempting MQTT connection...");
     // Attempt to connect
     client.setKeepAlive(60);
     if (client.connect("i2cGateHa","device","device1122")) {
-      Serial.println("connected");
-      int value = check_for_switch();
+      log("connected");
+      if (scan_needed == 1){
+         scanswitch();
+         scan_needed = 0;
+         }
       // Subscribe
       client.subscribe("i2c-output");
       registerdevice();
     } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+      log("failed, rc=");
+      log(client.state());
+      log(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
     }
@@ -160,6 +142,37 @@ char cconfig[1024];
      client.subscribe(dev["command_topic"]);
 }
 
+void epdlog(char *message)
+{
+#define STARTING_POS 105
+#define LINE_OFFSET  20
+#define MAX_LINE     30 * LINE_OFFSET
+
+static int current_pos = STARTING_POS;
+
+    canvas.drawString(message,25,current_pos);
+    canvas.pushCanvas(0,0,UPDATE_MODE_DU4);  //Update the screen.
+    current_pos = current_pos + LINE_OFFSET; 
+    if (current_pos > MAX_LINE){
+        current_pos = STARTING_POS;
+        } 
+}
+
+void log(String themessage)
+{
+char Buf[250];
+
+    themessage.toCharArray(Buf,250);
+    log(Buf);
+}
+
+void log(char *message)
+{
+  Serial.println(message);
+  epdlog(message);
+
+}
+
 void setup() {
   M5.begin();   //Init M5Paper.  
   M5.EPD.SetRotation(90);   //Set the rotation of the display.  
@@ -173,12 +186,13 @@ void setup() {
   canvas.pushCanvas(0,0,UPDATE_MODE_DU4);  //Update the screen. 
     
   Serial.begin(115200);
-  Serial.println("Booting");
+  log("Booting");
+  
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   WiFi.setSleep(false); // To avoid disconnect
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
+    log("Connection Failed! Rebooting...");
     delay(5000);
     ESP.restart();
   }
@@ -205,10 +219,10 @@ void setup() {
         type = "filesystem";
 
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
+      log("Start updating " + type);
     })
     .onEnd([]() {
-      Serial.println("\nEnd");
+      log("\nEnd");
     })
     .onProgress([](unsigned int progress, unsigned int total) {
       Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
@@ -229,13 +243,9 @@ void setup() {
   canvas.drawString(WiFi.localIP().toString(), 25, 60);
   canvas.pushCanvas(0,0,UPDATE_MODE_DU4);  //Update the screen.
    
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  log("Ready");
   
- 
-
-  Serial.print("Setting up MQTT");
+  log("Setting up MQTT");
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
