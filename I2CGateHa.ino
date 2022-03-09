@@ -1,18 +1,17 @@
 #include <AsyncDelay.h>
-#include <SoftWire.h>
+//#include <SoftWire.h>
+#include <Wire.h>
 #include <ArduinoJson.h>
-#include <WiFi.h>
+//#include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <M5EPD.h>
 #include <PubSubClient.h>
-//#include "TCA9548A.h"
 //#include <M5Stack.h>
 #include <M5EPD.h>
-//#include <Wire.h>
-SoftWire portA(25, 32);
-//TCA9548A<SoftwareWire> portAtca;
+
+//Wire portA(25,32);
 
   
 M5EPD_Canvas canvas(&M5.EPD);
@@ -24,13 +23,59 @@ const char* mqtt_server = "192.168.1.248";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-int check_for_switch(SoftWire theport){
-    theport.beginTransmission(0x70);
-    int result = theport.endTransmission();
+
+void TCA9548A(uint8_t bus)
+{
+  Wire1.beginTransmission(0x70);  // TCA9548A address is 0x70
+  Wire1.write(1 << bus);          // send byte to select bus
+  Wire1.endTransmission();
+}
+ 
+
+void register_device(uint8_t bus, uint8_t addr)
+{
+
+
+}
+
+void scanswitch()
+{
+  TCA9548A(0);
+  
+  
+  for(uint8_t bus = 0; bus < 8; bus++){
+    Serial.print("Scanning switch\n");
+    Serial.println(bus);
+    TCA9548A(bus);
+    for (uint8_t addr = 0;addr <= 127; addr++){
+      Wire1.beginTransmission(addr); // Check for 4 port relay
+      int result = Wire1.endTransmission();
+      if (result == 0){
+         Serial.print("Device Detected - ");
+         Serial.print("Port ");
+         Serial.print(bus);
+         Serial.print(" Addr: 0x");
+         Serial.println(addr,HEX);
+         register_device(bus,addr);
+         }
+        delay(100); 
+        }
+    }
+}
+
+boolean check_for_switch(){
+    Wire1.beginTransmission((0x70 << 1) + 1);
+    int result = Wire1.endTransmission();
     Serial.print("Is Switch Presence? ");
     Serial.print(result);
     Serial.print("\n");
-    return(result);
+    if (result == 2){
+      Serial.print("Switch is present\n");
+      scanswitch();
+      return true;
+    } else { 
+      return false;
+    }
 }
     
 
@@ -47,6 +92,7 @@ void reconnect() {
     client.setKeepAlive(60);
     if (client.connect("i2cGateHa","device","device1122")) {
       Serial.println("connected");
+      int value = check_for_switch();
       // Subscribe
       client.subscribe("i2c-output");
       registerdevice();
@@ -59,6 +105,7 @@ void reconnect() {
     }
   }
 }
+
 
 void callback(char* topic, byte* message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
@@ -118,6 +165,7 @@ void setup() {
   M5.EPD.SetRotation(90);   //Set the rotation of the display.  
   M5.EPD.Clear(true);  //Clear the screen. 
   M5.RTC.begin();  //Init the RTC.  初始化 RTC
+  Wire1.begin(25, 32);
   canvas.createCanvas(540, 960);  //Create a canvas.  创建画布
   canvas.setTextSize(3); //Set the text size.  设置文字大小
   canvas.drawString("I2CGateHa",25,20);
@@ -128,6 +176,7 @@ void setup() {
   Serial.println("Booting");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+  WiFi.setSleep(false); // To avoid disconnect
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(5000);
@@ -190,7 +239,8 @@ void setup() {
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
-  int value = check_for_switch(portA);
+  
+  
 
   }
 
