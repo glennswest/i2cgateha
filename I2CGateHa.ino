@@ -50,11 +50,76 @@ uint8_t read_relay(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 
 void send_thermocouple_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 {
+char buf[256];
+char message[128];
+char thetype[16];
+char thename[16];
+float value;
+int csize;   
 
+    sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
+    value = read_thermocouple(port,bus,addr,chan);
+    //sprintf(message,"state/%s/%s: {\"temperature\": %.1f}","sensor",thename,value);
+    sprintf(message,"%.1f",value);
+    strcpy(thetype,"sensor");
+    sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
+    sprintf(buf,"homeassistant/%s/%s/state",thetype,thename); 
+    csize = strlen(message);
+    client.publish(buf,message,csize);
 
 }
 
- 
+float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+  uint8_t tvalue;
+  uint8_t data1;
+  uint8_t data2;
+  float temp;
+  int status;
+  char buf[64];
+
+  log("Reading Thermocouple");
+  status = 0x0;
+  while (status == 0x00){
+        status = tc_temp_stat(port,bus,addr,chan);
+        log("Waiting on temp"); 
+        log(status);
+  }
+  log("Got It");
+  
+  TCA9548A(bus);
+  
+  Wire1.beginTransmission(addr);
+  Wire1.write(0x00);
+  Wire1.endTransmission();
+  Wire1.requestFrom(addr, 2);
+    if (Wire1.available() == 2){
+      data1 = Wire1.read();
+      data2 = Wire1.read();
+      log(data1);
+      log(data2);
+      if((data1 & 0x80) == 0x80){
+        data1 = data1 & 0x7F;
+        temp = 1024 - ( data1 * 16 + data2/16);
+       } else { 
+        data1 = data1 *16;
+        data2 = data2 * 0.0625;
+        log(data1);
+        log(data2);
+        temp = data1 + data2;
+        //   temp = ( data1 * 16 + data2/16);
+        } 
+      } else {
+        temp = 0;
+        log("No data from sensor");
+      }
+  sprintf(buf,"Temp: %0.1f",temp);
+  log(buf);
+  //tc_stat_clr(port,bus,addr,chan);
+  
+  return(temp);
+} 
+
 void send_relay_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 {
 char buf[256];
@@ -96,13 +161,68 @@ char theid[32];
          send_relay_status(port,bus,addr,chan);
 }
 
+int tc_temp_stat(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+int stat;
+
+  TCA9548A(bus);
+  Wire1.beginTransmission(addr);
+  Wire1.write(0x04);
+  Wire1.endTransmission();
+  delay(50);
+  Wire1.requestFrom(addr, 1);
+    if (Wire1.available() == 1)
+  {
+   stat = Wire1.read();
+  }
+
+  return stat;
+}
+
+void tc_temrmo_set(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+  TCA9548A(bus);
+  Wire1.beginTransmission(addr);
+  Wire1.write(0x05);
+  Wire1.write(0x00);
+  Wire1.endTransmission();
+}
+
+void tc_device_set(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+  TCA9548A(bus);
+  Wire1.beginTransmission(addr);
+  Wire1.write(0x06);
+  Wire1.write(0x00);
+  Wire1.endTransmission();
+}
+
+int tc_stat_clr(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+  TCA9548A(bus);
+  Wire1.beginTransmission(addr);
+  Wire1.write(0x04);
+  Wire1.write(0x0F);
+  Wire1.endTransmission();
+}
+
+void setup_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+  int status;
+  
+  tc_temrmo_set(port,bus,addr,chan);
+  tc_device_set(port,bus,addr,chan);
+  status = tc_temp_stat(port,bus,addr,chan); // Kick off temp reading
+}
+
 void register_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 {
 char thename[32];
 char theid[32];
 
          sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
-         sprintf(theid,  "%s_id",thename);        
+         sprintf(theid,  "%s_id",thename); 
+         setup_thermocouple(port,bus,addr,chan);       
          ha_tc_register(thename,theid,"sensor");
          send_thermocouple_status(port,bus,addr,chan);
 
@@ -112,7 +232,7 @@ void ha_tc_register(char *thename,char *theuid,char *thetype){
 StaticJsonDocument<2024> dev;
 char cconfig[1400];
 char buf[256];
-char logb[1400];
+char logb[256];
 
      strcpy(logb,"");
      sprintf(logb,"Device %s - %s",thetype,thename);
@@ -121,7 +241,7 @@ char logb[1400];
      sprintf(buf,"%sId",thename);     
      dev["unit_of_measurement"] = "°C";
      dev["device_class"] = "temperature";
-     dev["value_template"] = "{{value_json.temperature}}";
+     //dev["value_template"] = "{{value_json.temperature}}";
      sprintf(buf,"homeassistant/%s/%s/state",thetype,thename);
      dev["state_topic"]     = buf; 
      
@@ -133,7 +253,10 @@ char logb[1400];
     
     
      client.subscribe(dev["state_topic"]);
-    
+     
+     sprintf(buf,"homeassistant/%s/%s/config", thetype,thename); //char *subject = "homeassistant/switch/i2cgateha-01-01/config";
+     log(buf);
+     log(cconfig);
      client.publish(buf,cconfig,csize);
      delay(100);
    
@@ -171,7 +294,7 @@ char logb[1400];
      
      config.toCharArray(cconfig,csize);
                 
-     //sprintf(buf,"homeassistant/%s/%s/config", thetype,thename); //char *subject = "homeassistant/switch/i2cgateha-01-01/config";
+     sprintf(buf,"homeassistant/%s/%s/config", thetype,thename); //char *subject = "homeassistant/switch/i2cgateha-01-01/config";
      //log(buf);
      //log(cconfig);
      
@@ -225,7 +348,7 @@ char logb[128];
       if (result == 0){
          register_device(port,bus,addr);
          }
-        delay(10); 
+        delay(1); 
         }
       }
 }
