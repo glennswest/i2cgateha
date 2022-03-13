@@ -10,8 +10,17 @@
 #include <PubSubClient.h>
 //#include <M5Stack.h>
 #include <M5EPD.h>
+#include <LinkedList.h>
+#include <arduino-timer.h>
 
-//Wire portA(25,32);
+auto timer = timer_create_default();
+class TempSensor {
+      public:
+          char *name;
+          float value;
+          };
+          
+LinkedList<TempSensor*> sensorList = LinkedList<TempSensor*>();   
 
   
 M5EPD_Canvas canvas(&M5.EPD);
@@ -48,7 +57,7 @@ uint8_t read_relay(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   return(relayvalue);
 }
 
-void send_thermocouple_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+float send_thermocouple_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 {
 char buf[256];
 char message[128];
@@ -66,7 +75,7 @@ int csize;
     sprintf(buf,"homeassistant/%s/%s/state",thetype,thename); 
     csize = strlen(message);
     client.publish(buf,message,csize);
-
+    return value;
 }
 
 float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
@@ -217,14 +226,21 @@ void setup_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 
 void register_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 {
-char thename[32];
+char *thename;
 char theid[32];
+float value;
 
+         thename = (char *)malloc(32);   
          sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
          sprintf(theid,  "%s_id",thename); 
+        
          setup_thermocouple(port,bus,addr,chan);       
          ha_tc_register(thename,theid,"sensor");
-         send_thermocouple_status(port,bus,addr,chan);
+         value = send_thermocouple_status(port,bus,addr,chan);
+         TempSensor *sensor = new TempSensor();
+         sensor->name = thename;
+         sensor->value = value;
+         sensorList.add(sensor);
 
 }
 
@@ -442,6 +458,13 @@ void log(char *message)
 
 }
 
+bool check_temp_sensors(void *)
+{
+
+  log("BEEP!");
+  return true;
+}
+
 void setup() {
   M5.begin();   //Init M5Paper.  
   M5.EPD.SetRotation(90);   //Set the rotation of the display.  
@@ -519,11 +542,11 @@ void setup() {
   client.setCallback(callback);
 
   
-  
-
+  timer.every(30000, check_temp_sensors);
   }
 
 void loop() {
+  timer.tick();
   ArduinoOTA.handle();
    if (!client.connected()) {
     reconnect();
