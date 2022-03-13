@@ -17,6 +17,10 @@ auto timer = timer_create_default();
 class TempSensor {
       public:
           char *name;
+          uint8_t port;
+          uint8_t bus;
+          uint8_t addr; 
+          uint8_t chan;
           float value;
           };
           
@@ -57,17 +61,16 @@ uint8_t read_relay(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   return(relayvalue);
 }
 
-float send_thermocouple_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+void send_thermocouple_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan,float value)
 {
 char buf[256];
 char message[128];
 char thetype[16];
 char thename[16];
-float value;
 int csize;   
 
     sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
-    value = read_thermocouple(port,bus,addr,chan);
+   
     //sprintf(message,"state/%s/%s: {\"temperature\": %.1f}","sensor",thename,value);
     sprintf(message,"%.1f",value);
     strcpy(thetype,"sensor");
@@ -75,7 +78,6 @@ int csize;
     sprintf(buf,"homeassistant/%s/%s/state",thetype,thename); 
     csize = strlen(message);
     client.publish(buf,message,csize);
-    return value;
 }
 
 float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
@@ -87,15 +89,11 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   int status;
   char buf[64];
 
-  log("Reading Thermocouple");
+  
   status = 0x0;
   while (status == 0x00){
         status = tc_temp_stat(port,bus,addr,chan);
-        log("Waiting on temp"); 
-        log(status);
-  }
-  log("Got It");
-  
+        }
   TCA9548A(bus);
   
   Wire1.beginTransmission(addr);
@@ -122,8 +120,8 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
         temp = 0;
         log("No data from sensor");
       }
-  sprintf(buf,"Temp: %0.1f",temp);
-  log(buf);
+  //sprintf(buf,"Temp: %0.1f",temp);
+  //log(buf);
   //tc_stat_clr(port,bus,addr,chan);
   
   return(temp);
@@ -236,9 +234,14 @@ float value;
         
          setup_thermocouple(port,bus,addr,chan);       
          ha_tc_register(thename,theid,"sensor");
-         value = send_thermocouple_status(port,bus,addr,chan);
+         value = read_thermocouple(port,bus,addr,chan);
+         send_thermocouple_status(port,bus,addr,chan,value);
          TempSensor *sensor = new TempSensor();
          sensor->name = thename;
+         sensor->port = port;
+         sensor->bus  = bus;
+         sensor->addr = addr;
+         sensor->chan = chan;
          sensor->value = value;
          sensorList.add(sensor);
 
@@ -319,7 +322,7 @@ char logb[1400];
      client.subscribe(dev["command_topic"]);
      //client.subscribe(dev["availability_topic"]);
      client.publish(buf,cconfig,csize);
-     delay(100);
+     //delay(100);
    
 }
 
@@ -381,6 +384,7 @@ void reconnect() {
       log("connected");
       if (scan_needed == 1){
          scanswitch();
+         timer.every(5000, check_temp_sensors);
          scan_needed = 0;
          }
       // Subscribe
@@ -460,8 +464,21 @@ void log(char *message)
 
 bool check_temp_sensors(void *)
 {
-
-  log("BEEP!");
+float new_value;
+ 
+  TempSensor *sensor;
+  char buf[256];
+  
+  for(int i=0 ; i < sensorList.size(); i++){
+    sensor = sensorList.get(i);
+    new_value = read_thermocouple(sensor->port,sensor->bus,sensor->addr,sensor->chan);
+    if (new_value != sensor->value){
+       send_thermocouple_status(sensor->port,sensor->bus,sensor->addr,sensor->chan,new_value);
+       sensor->value = new_value;
+       sprintf(buf,"Sensor: %s Temp %f",sensor->name,sensor->value);
+       log(buf);
+       } 
+    }
   return true;
 }
 
@@ -542,7 +559,7 @@ void setup() {
   client.setCallback(callback);
 
   
-  timer.every(30000, check_temp_sensors);
+  
   }
 
 void loop() {
