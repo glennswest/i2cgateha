@@ -31,10 +31,182 @@ void TCA9548A(uint8_t bus)
   Wire1.endTransmission();
 }
  
+uint8_t read_relay(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+  uint8_t relayvalue;
+  
+  TCA9548A(bus);
+  
+  Wire1.beginTransmission(addr);
+  Wire1.write(0x11);
+  Wire1.endTransmission();
+  Wire1.requestFrom(addr,1);
+  byte tvalue = Wire1.read();
+  
+ 
+  relayvalue = (tvalue >> chan) & 1; 
+  return(relayvalue);
+}
+
+void send_thermocouple_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+
+
+}
+
+ 
+void send_relay_status(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+char buf[256];
+char message[32];
+char logb[256];
+char thetype[16];
+char thename[16];
+int csize;
+uint8_t value;
+  
+    value = read_relay(port,bus,addr,chan);
+    strcpy(thetype,"switch");
+    sprintf(thename,"r%1d%1d%2d%1d",port,bus,addr,chan);
+    sprintf(buf,"homeassistant/%s/%s/state",thetype,thename);    
+    switch(value){
+      case 0:
+       strcpy(message,"OFF");
+       break;
+      case 1:
+       strcpy(message,"ON");
+       break;      
+       }
+       
+ //sprintf(logb,"RelayStatus: %s - %s",buf,message);
+ //log(logb);
+ 
+ csize = strlen(message);
+ client.publish(buf,message,csize);
+}
+
+void register_relay(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+char thename[32];
+char theid[32];
+
+         sprintf(thename,"r%1d%1d%2d%1d",port,bus,addr,chan);
+         sprintf(theid,  "%s_id",thename);        
+         ha_sw_register(thename,theid,"switch");
+         send_relay_status(port,bus,addr,chan);
+}
+
+void register_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
+{
+char thename[32];
+char theid[32];
+
+         sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
+         sprintf(theid,  "%s_id",thename);        
+         ha_tc_register(thename,theid,"sensor");
+         send_thermocouple_status(port,bus,addr,chan);
+
+}
+
+void ha_tc_register(char *thename,char *theuid,char *thetype){
+StaticJsonDocument<2024> dev;
+char cconfig[1400];
+char buf[256];
+char logb[1400];
+
+     strcpy(logb,"");
+     sprintf(logb,"Device %s - %s",thetype,thename);
+     log(logb);
+     dev["name"]            = thename; 
+     sprintf(buf,"%sId",thename);     
+     dev["unit_of_measurement"] = "°C";
+     dev["device_class"] = "temperature";
+     dev["value_template"] = "{{value_json.temperature}}";
+     sprintf(buf,"homeassistant/%s/%s/state",thetype,thename);
+     dev["state_topic"]     = buf; 
+     
+     String config = dev.as<String>();
+     unsigned int csize = config.length() + 1;
+     
+     config.toCharArray(cconfig,csize);
+                
+    
+    
+     client.subscribe(dev["state_topic"]);
+    
+     client.publish(buf,cconfig,csize);
+     delay(100);
+   
+}
+
+void ha_sw_register(char *thename,char *theuid,char *thetype){
+StaticJsonDocument<2024> dev;
+char cconfig[1400];
+char buf[256];
+char logb[1400];
+
+     strcpy(logb,"");
+     sprintf(logb,"Device %s - %s",thetype,thename);
+     log(logb);
+     dev["name"]            = thename; 
+     sprintf(buf,"%sId",thename);     
+     //dev["unique_id"]       = buf; // "switch.i2cgateha0101_identify";
+     //dev["entity_category"] = thetype; // "switch";
+     //dev["device_class"]  = thetype; // "switch";
+     dev["payload_on"]      = "ON";
+     dev["payload_off"]     = "OFF";
+
+     sprintf(buf,"homeassistant/%s/%s/availability",thetype,thename);
+     dev["availability_topic"]  = buf; 
+     
+     sprintf(buf,"homeassistant/%s/%s/set",thetype,thename);
+     dev["command_topic"]   = buf;
+  
+     sprintf(buf,"homeassistant/%s/%s/state",thetype,thename);
+     dev["state_topic"]     = buf; 
+     
+     String config = dev.as<String>();
+     unsigned int csize = config.length() + 1;
+     //Serial.println("MQTT MSG: " + config);
+     
+     config.toCharArray(cconfig,csize);
+                
+     //sprintf(buf,"homeassistant/%s/%s/config", thetype,thename); //char *subject = "homeassistant/switch/i2cgateha-01-01/config";
+     //log(buf);
+     //log(cconfig);
+     
+    
+     client.subscribe(dev["state_topic"]);
+     client.subscribe(dev["command_topic"]);
+     //client.subscribe(dev["availability_topic"]);
+     client.publish(buf,cconfig,csize);
+     delay(100);
+   
+}
 
 void register_device(uint8_t port, uint8_t bus, uint8_t addr)
 {
-
+char logb[256];
+  
+         if (addr == 0x70){ // Ignore Switch
+            return;
+            }
+         
+         switch(addr){
+               case 0x26: //* Grove 4 channel relay
+                    register_relay(port,bus,addr,0);
+                    register_relay(port,bus,addr,1);
+                    register_relay(port,bus,addr,2);
+                    register_relay(port,bus,addr,3);
+                    break;
+               case 0x60:      
+                    register_thermocouple(port,bus,addr,0);
+                    break;
+               default:
+                    sprintf(logb,"Unknown Device %1d - Bus %1d - Addr %02x",port,bus,addr);
+                    log(logb);
+                    break;
+         }
 
 }
 
@@ -46,19 +218,16 @@ char logb[128];
   uint8_t port = 0;
   
   for(uint8_t bus = 0; bus < 8; bus++){
-    log("Device Discovery\n");
     TCA9548A(bus);
     for (uint8_t addr = 0;addr <= 127; addr++){
       Wire1.beginTransmission(addr); // Check for 4 port relay
       int result = Wire1.endTransmission();
       if (result == 0){
-         sprintf(logb,"Port %d - Bus %d - Addr %xd",port,bus,addr);
-         log(logb);
          register_device(port,bus,addr);
          }
-        delay(100); 
+        delay(10); 
         }
-    }
+      }
 }
 
 
@@ -77,7 +246,6 @@ void reconnect() {
          }
       // Subscribe
       client.subscribe("i2c-output");
-      registerdevice();
     } else {
       log("failed, rc=");
       log(client.state());
@@ -90,63 +258,41 @@ void reconnect() {
 
 
 void callback(char* topic, byte* message, unsigned int length) {
-  Serial.print("Message arrived on topic: ");
+  Serial.print("Message: ");
   Serial.print(topic);
-  Serial.print(". Message: ");
-  String messageTemp;
+  //Serial.print(". Message: ");
+  //String messageTemp;
   
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)message[i]);
-    messageTemp += (char)message[i];
-  }
+  //for (int i = 0; i < length; i++) {
+  //  Serial.print((char)message[i]);
+  //  messageTemp += (char)message[i];
+  //}
   Serial.println();
 
   // Feel free to add more if statements to control more GPIOs with MQTT
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "esp32/output") {
-    Serial.print("Changing output to ");
-    if(messageTemp == "on"){
-      Serial.println("on");
+//  if (String(topic) == "esp32/output") {
+//    Serial.print("Changing output to ");
+//    if(messageTemp == "on"){
+//      Serial.println("on");
 //    digitalWrite(ledPin, HIGH);
-    }
-    else if(messageTemp == "off"){
-      Serial.println("off");
+//    }
+//    else if(messageTemp == "off"){
+//      Serial.println("off");
 //    digitalWrite(ledPin, LOW);
-    }
-  }
+//    }
+//  }
 }
 
-void registerdevice(){
-StaticJsonDocument<1024> dev;
-char cconfig[1024];
 
-     dev["name"]            = "i2cgateha0101";
-     dev["unique_id"]       = "switch.i2cgateha0101_identify";
-     dev["entity_category"] = "switch";
-     //dev["device_class"]  = "switch";
-     dev["payload_on"]      = 1;
-     dev["payload_off"]     = 0;
-     dev["command_topic"]   = "homeassistant/switch/i2cgateha0101/set";
-     dev["state_topic"]     = "homeassistant/switch/i2cgateha0101/state";
-     
-     String config = dev.as<String>();
-     unsigned int csize = config.length();
-     Serial.println("MQTT MSG: " + config);
-     
-     config.toCharArray(cconfig,csize);
-     //char *subject = "homeassistant/switch/i2cgateha-01-01/config";
-     client.publish("homeassistant/switch/i2cgateha0101/config",cconfig,csize);
-     client.subscribe(dev["state_topic"]);
-     client.subscribe(dev["command_topic"]);
-}
 
 void epdlog(char *message)
 {
 #define STARTING_POS 105
 #define LINE_OFFSET  20
-#define MAX_LINE     30 * LINE_OFFSET
+#define MAX_LINE     50 * LINE_OFFSET
 
 static int current_pos = STARTING_POS;
 
@@ -243,9 +389,9 @@ void setup() {
   canvas.drawString(WiFi.localIP().toString(), 25, 60);
   canvas.pushCanvas(0,0,UPDATE_MODE_DU4);  //Update the screen.
    
-  log("Ready");
+  log((char *)"Ready");
   
-  log("Setting up MQTT");
+  log((char *)"Setting up MQTT");
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
