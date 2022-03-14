@@ -85,6 +85,8 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   uint8_t tvalue;
   uint8_t data1;
   uint8_t data2;
+  float   value1;
+  float   value2;
   float temp;
   int status;
   char buf[64];
@@ -103,17 +105,17 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
     if (Wire1.available() == 2){
       data1 = Wire1.read();
       data2 = Wire1.read();
-      log(data1);
-      log(data2);
+      //log(data1);
+      //log(data2);
       if((data1 & 0x80) == 0x80){
         data1 = data1 & 0x7F;
-        temp = 1024 - ( data1 * 16 + data2/16);
+        temp = 1024 - ( (float) data1 * 16 + (float)data2/16);
        } else { 
-        data1 = data1 *16;
-        data2 = data2 * 0.0625;
-        log(data1);
-        log(data2);
-        temp = data1 + data2;
+        value1 = data1 *16;
+        value2 = data2 * 0.0625;
+        //log(data1);
+        //log(data2);
+        temp = value1 + value2;
         //   temp = ( data1 * 16 + data2/16);
         } 
       } else {
@@ -475,7 +477,7 @@ float new_value;
     if (new_value != sensor->value){
        send_thermocouple_status(sensor->port,sensor->bus,sensor->addr,sensor->chan,new_value);
        sensor->value = new_value;
-       sprintf(buf,"Sensor: %s Temp %f",sensor->name,sensor->value);
+       sprintf(buf,"Sensor: %s Temp %.2f",sensor->name,sensor->value);
        log(buf);
        } 
     }
