@@ -12,8 +12,15 @@
 #include <M5EPD.h>
 #include <LinkedList.h>
 #include <arduino-timer.h>
+#include <math.h>
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
 
 auto timer = timer_create_default();
+
+
+
 class TempSensor {
       public:
           char *name;
@@ -26,7 +33,7 @@ class TempSensor {
           
 LinkedList<TempSensor*> sensorList = LinkedList<TempSensor*>();   
 
-  
+const int chipSelect = 4;  
 M5EPD_Canvas canvas(&M5.EPD);
 
 const char* ssid = "gswlair";
@@ -35,6 +42,35 @@ const char* password = "0419196200";
 const char* mqtt_server = "192.168.1.248";
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+WiFiServer server(80);
+String header;
+
+void initSDCard(){
+  if(!SD.begin()){
+    Serial.println("Card Mount Failed");
+    return;
+  }
+  uint8_t cardType = SD.cardType();
+
+  if(cardType == CARD_NONE){
+    Serial.println("No SD card attached");
+    return;
+  }
+
+  Serial.print("SD Card Type: ");
+  if(cardType == CARD_MMC){
+    Serial.println("MMC");
+  } else if(cardType == CARD_SD){
+    Serial.println("SDSC");
+  } else if(cardType == CARD_SDHC){
+    Serial.println("SDHC");
+  } else {
+    Serial.println("UNKNOWN");
+  }
+  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+}
 
 
 void TCA9548A(uint8_t bus)
@@ -88,6 +124,7 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   float   value1;
   float   value2;
   float temp;
+  float rtemp;
   int status;
   char buf[64];
 
@@ -125,7 +162,6 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   //sprintf(buf,"Temp: %0.1f",temp);
   //log(buf);
   //tc_stat_clr(port,bus,addr,chan);
-  
   return(temp);
 } 
 
@@ -255,14 +291,13 @@ char cconfig[1400];
 char buf[256];
 char logb[256];
 
-     strcpy(logb,"");
-     sprintf(logb,"Device %s - %s",thetype,thename);
-     log(logb);
+     //strcpy(logb,"");
+     //sprintf(logb,"Device %s - %s",thetype,thename);
+     //log(logb);
      dev["name"]            = thename; 
      sprintf(buf,"%sId",thename);     
      dev["unit_of_measurement"] = "°C";
      dev["device_class"] = "temperature";
-     //dev["value_template"] = "{{value_json.temperature}}";
      sprintf(buf,"homeassistant/%s/%s/state",thetype,thename);
      dev["state_topic"]     = buf; 
      
@@ -276,8 +311,8 @@ char logb[256];
      client.subscribe(dev["state_topic"]);
      
      sprintf(buf,"homeassistant/%s/%s/config", thetype,thename); //char *subject = "homeassistant/switch/i2cgateha-01-01/config";
-     log(buf);
-     log(cconfig);
+     //log(buf);
+     //log(cconfig);
      client.publish(buf,cconfig,csize);
      delay(100);
    
@@ -289,9 +324,9 @@ char cconfig[1400];
 char buf[256];
 char logb[1400];
 
-     strcpy(logb,"");
-     sprintf(logb,"Device %s - %s",thetype,thename);
-     log(logb);
+     //strcpy(logb,"");
+     //sprintf(logb,"Device %s - %s",thetype,thename);
+     //log(logb);
      dev["name"]            = thename; 
      sprintf(buf,"%sId",thename);     
      //dev["unique_id"]       = buf; // "switch.i2cgateha0101_identify";
@@ -403,8 +438,8 @@ void reconnect() {
 
 
 void callback(char* topic, byte* message, unsigned int length) {
-  Serial.print("Message: ");
-  Serial.print(topic);
+  //Serial.print("Message: ");
+  //Serial.print(topic);
   //Serial.print(". Message: ");
   //String messageTemp;
   
@@ -474,6 +509,9 @@ float new_value;
   for(int i=0 ; i < sensorList.size(); i++){
     sensor = sensorList.get(i);
     new_value = read_thermocouple(sensor->port,sensor->bus,sensor->addr,sensor->chan);
+    if ((new_value > sensor->value - .50) && (new_value < sensor->value + .50)){
+       new_value = sensor->value;
+       }
     if (new_value != sensor->value){
        send_thermocouple_status(sensor->port,sensor->bus,sensor->addr,sensor->chan,new_value);
        sensor->value = new_value;
@@ -491,7 +529,7 @@ void setup() {
   M5.RTC.begin();  //Init the RTC.  初始化 RTC
   Wire1.begin(25, 32);
   canvas.createCanvas(540, 960);  //Create a canvas.  创建画布
-  canvas.setTextSize(3); //Set the text size.  设置文字大小
+  canvas.setTextSize(4); //Set the text size.  设置文字大小
   canvas.drawString("I2CGateHa",25,20);
   canvas.drawString("I2C Home Assistant Gateway", 25, 45);  //Draw a string.
   canvas.pushCanvas(0,0,UPDATE_MODE_DU4);  //Update the screen. 
@@ -508,6 +546,10 @@ void setup() {
     ESP.restart();
   }
 
+   initSDCard();
+   
+   server.begin();
+  
   // Port defaults to 3232
   // ArduinoOTA.setPort(3232);
 
@@ -564,6 +606,82 @@ void setup() {
   
   }
 
+
+// Current time
+unsigned long currentTime = millis();
+// Previous time
+unsigned long previousTime = 0; 
+// Define timeout time in milliseconds (example: 2000ms = 2s)
+const long timeoutTime = 2000;
+  
+void webloop()
+{
+WiFiClient client = server.available();   // Listen for incoming clients
+
+  if (client) {                             // If a new client connects,
+    currentTime = millis();
+    previousTime = currentTime;
+    Serial.println("New Client.");          // print a message out in the serial port
+    String currentLine = "";                // make a String to hold incoming data from the client
+    while (client.connected() && currentTime - previousTime <= timeoutTime) {  // loop while the client's connected
+      currentTime = millis();
+      if (client.available()) {             // if there's bytes to read from the client,
+        char c = client.read();             // read a byte, then
+        Serial.write(c);                    // print it out the serial monitor
+        header += c;
+        if (c == '\n') {                    // if the byte is a newline character
+          // if the current line is blank, you got two newline characters in a row.
+          // that's the end of the client HTTP request, so send a response:
+          if (currentLine.length() == 0) {
+            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+            // and a content-type so the client knows what's coming, then a blank line:
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println("Connection: close");
+            client.println();
+            
+           
+            
+            // Display the HTML web page
+            client.println("<!DOCTYPE html><html>");
+            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+            client.println("<link rel=\"icon\" href=\"data:,\">");
+            // CSS to style the on/off buttons 
+            // Feel free to change the background-color and font-size attributes to fit your preferences
+            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+            client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
+            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
+            client.println(".button2 {background-color: #555555;}</style></head>");
+            
+            // Web Page Heading
+            client.println("<body><h1>ESP32 Web Server</h1>");
+            
+           
+         
+            
+            // The HTTP response ends with another blank line
+            client.println();
+            // Break out of the while loop
+            break;
+          } else { // if you got a newline, then clear currentLine
+            currentLine = "";
+          }
+        } else if (c != '\r') {  // if you got anything else but a carriage return character,
+          currentLine += c;      // add it to the end of the currentLine
+        }
+      }
+    }
+    // Clear the header variable
+    header = "";
+    // Close the connection
+    client.stop();
+    Serial.println("Client disconnected.");
+    Serial.println("");
+  }
+
+
+}
+
 void loop() {
   timer.tick();
   ArduinoOTA.handle();
@@ -571,4 +689,5 @@ void loop() {
     reconnect();
   }
   client.loop();
+  webloop();
 }
