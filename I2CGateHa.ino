@@ -1,37 +1,58 @@
+
+
+
+
 #include <AsyncDelay.h>
-//#include <SoftWire.h>
 #include <Wire.h>
 #include <ArduinoJson.h>
-//#include <WiFi.h>
+#include <WiFi.h>
+
 #include <ESPmDNS.h>
-#include <WiFiUdp.h>
+//#include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <M5EPD.h>
 #include <PubSubClient.h>
-//#include <M5Stack.h>
-#include <M5EPD.h>
-#include <LinkedList.h>
+//#include <LinkedList.h>
 #include <arduino-timer.h>
 #include <math.h>
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
 
+#include <AsyncEventSource.h>
+#include <AsyncJson.h>
+#include <SPIFFSEditor.h>
+#include <WebHandlerImpl.h>
+#include <ESPAsyncWebServer.h>
+#include <WebAuthentication.h>
+#include <AsyncWebSynchronization.h>
+#include <AsyncWebSocket.h>
+#include <WebResponseImpl.h>
+#include <StringArray.h>
+#include <AsyncTCP.h>
+
+#include <cppQueue.h>
+
+
+
 auto timer = timer_create_default();
 
 
+struct tempPtrStruct {
+          struct tempSensorStruct *ptr;
+} tssptrrec;
 
-class TempSensor {
-      public:
-          char *name;
+typedef struct tempSensorStruct {
+          char  name[32];
           uint8_t port;
           uint8_t bus;
           uint8_t addr; 
           uint8_t chan;
           float value;
-          };
+          } tsrec;
+
+cppQueue    sensorList(sizeof(tssptrrec), 100, FIFO);
           
-LinkedList<TempSensor*> sensorList = LinkedList<TempSensor*>();   
 
 const int chipSelect = 4;  
 M5EPD_Canvas canvas(&M5.EPD);
@@ -43,8 +64,10 @@ const char* mqtt_server = "192.168.1.248";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-WiFiServer server(80);
+AsyncWebServer  server(80);
 String header;
+
+
 
 void initSDCard(){
   if(!SD.begin()){
@@ -127,7 +150,7 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   float rtemp;
   int status;
   char buf[64];
-
+  char thename[32];
   
   status = 0x0;
   while (status == 0x00){
@@ -157,7 +180,9 @@ float read_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
         } 
       } else {
         temp = 0;
+        sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
         log("No data from sensor");
+        log(thename);
       }
   //sprintf(buf,"Temp: %0.1f",temp);
   //log(buf);
@@ -260,11 +285,24 @@ void setup_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
   status = tc_temp_stat(port,bus,addr,chan); // Kick off temp reading
 }
 
+struct tempPtrStruct *newSensorEntry()
+{
+     struct tempPtrStruct *ptrentry;
+     tsrec     *entry;
+
+     ptrentry = (struct tempPtrStruct *)malloc(sizeof(struct tempPtrStruct));
+     entry = (tsrec *)malloc(sizeof(tsrec));
+     ptrentry->ptr = entry;
+     return(ptrentry);
+}
+
 void register_thermocouple(uint8_t port,uint8_t bus,uint8_t addr, uint8_t chan)
 {
 char *thename;
 char theid[32];
 float value;
+tsrec *sensor;
+struct tempPtrStruct *tsrecptr;
 
          thename = (char *)malloc(32);   
          sprintf(thename,"t%1d%1d%2d%1d",port,bus,addr,chan);
@@ -274,15 +312,44 @@ float value;
          ha_tc_register(thename,theid,"sensor");
          value = read_thermocouple(port,bus,addr,chan);
          send_thermocouple_status(port,bus,addr,chan,value);
-         TempSensor *sensor = new TempSensor();
-         sensor->name = thename;
+
+         
+         tsrecptr = newSensorEntry();
+         sensor = tsrecptr->ptr;
+         strcpy(sensor->name,thename);
          sensor->port = port;
          sensor->bus  = bus;
          sensor->addr = addr;
          sensor->chan = chan;
          sensor->value = value;
-         sensorList.add(sensor);
+         sensorList.push(tsrecptr);
 
+}
+
+bool check_temp_sensors(void *)
+{
+float new_value;
+ tsrec *sensor;
+ struct tempPtrStruct tsrecptr;
+  
+  
+  char buf[256];
+  
+  for(int i=0 ; i < sensorList.getCount(); i++){
+    sensorList.peekIdx(&tsrecptr,i);
+    sensor = tsrecptr.ptr;
+    new_value = read_thermocouple(sensor->port,sensor->bus,sensor->addr,sensor->chan);
+    if ((new_value > sensor->value - .50) && (new_value < sensor->value + .50)){
+       new_value = sensor->value;
+       }
+    if (new_value != sensor->value){
+       send_thermocouple_status(sensor->port,sensor->bus,sensor->addr,sensor->chan,new_value);
+       sensor->value = new_value;
+       sprintf(buf,"Sensor: %s Temp %.2f",sensor->name,sensor->value);
+       log(buf);
+       } 
+    }
+  return true;
 }
 
 void ha_tc_register(char *thename,char *theuid,char *thetype){
@@ -499,28 +566,7 @@ void log(char *message)
 
 }
 
-bool check_temp_sensors(void *)
-{
-float new_value;
- 
-  TempSensor *sensor;
-  char buf[256];
-  
-  for(int i=0 ; i < sensorList.size(); i++){
-    sensor = sensorList.get(i);
-    new_value = read_thermocouple(sensor->port,sensor->bus,sensor->addr,sensor->chan);
-    if ((new_value > sensor->value - .50) && (new_value < sensor->value + .50)){
-       new_value = sensor->value;
-       }
-    if (new_value != sensor->value){
-       send_thermocouple_status(sensor->port,sensor->bus,sensor->addr,sensor->chan,new_value);
-       sensor->value = new_value;
-       sprintf(buf,"Sensor: %s Temp %.2f",sensor->name,sensor->value);
-       log(buf);
-       } 
-    }
-  return true;
-}
+
 
 void setup() {
   M5.begin();   //Init M5Paper.  
@@ -607,79 +653,15 @@ void setup() {
   }
 
 
-// Current time
-unsigned long currentTime = millis();
-// Previous time
-unsigned long previousTime = 0; 
-// Define timeout time in milliseconds (example: 2000ms = 2s)
-const long timeoutTime = 2000;
+
   
 void webloop()
 {
-WiFiClient client = server.available();   // Listen for incoming clients
-
-  if (client) {                             // If a new client connects,
-    currentTime = millis();
-    previousTime = currentTime;
-    Serial.println("New Client.");          // print a message out in the serial port
-    String currentLine = "";                // make a String to hold incoming data from the client
-    while (client.connected() && currentTime - previousTime <= timeoutTime) {  // loop while the client's connected
-      currentTime = millis();
-      if (client.available()) {             // if there's bytes to read from the client,
-        char c = client.read();             // read a byte, then
-        Serial.write(c);                    // print it out the serial monitor
-        header += c;
-        if (c == '\n') {                    // if the byte is a newline character
-          // if the current line is blank, you got two newline characters in a row.
-          // that's the end of the client HTTP request, so send a response:
-          if (currentLine.length() == 0) {
-            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-            // and a content-type so the client knows what's coming, then a blank line:
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
-            client.println("Connection: close");
-            client.println();
-            
-           
-            
-            // Display the HTML web page
-            client.println("<!DOCTYPE html><html>");
-            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-            client.println("<link rel=\"icon\" href=\"data:,\">");
-            // CSS to style the on/off buttons 
-            // Feel free to change the background-color and font-size attributes to fit your preferences
-            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-            client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
-            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-            client.println(".button2 {background-color: #555555;}</style></head>");
-            
-            // Web Page Heading
-            client.println("<body><h1>ESP32 Web Server</h1>");
-            
-           
-         
-            
-            // The HTTP response ends with another blank line
-            client.println();
-            // Break out of the while loop
-            break;
-          } else { // if you got a newline, then clear currentLine
-            currentLine = "";
-          }
-        } else if (c != '\r') {  // if you got anything else but a carriage return character,
-          currentLine += c;      // add it to the end of the currentLine
-        }
-      }
-    }
-    // Clear the header variable
-    header = "";
-    // Close the connection
-    client.stop();
-    Serial.println("Client disconnected.");
-    Serial.println("");
-  }
-
-
+ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SD, "/index.html", "text/html");
+  });
+  server.serveStatic("/", SD, "/");
+  server.begin();
 }
 
 void loop() {
