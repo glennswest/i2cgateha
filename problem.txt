@@ -1,0 +1,104 @@
+Brownout detector was triggered
+
+ets Jul 29 2019 12:21:46
+
+rst:0xc (SW_CPU_RESET),boot:0x16 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:1184
+load:0x40078000,len:12804
+ho 0 tail 12 room 4
+load:0x40080400,len:3032
+entry 0x400805e4
+M5EPD initializing...OK
+Booting
+SD Card Type: SDHC
+SD Card Size: 14910MB
+Connecting to Wi-Fi...
+[WiFi-event] event: 0
+[WiFi-event] event: 2
+Ready
+[WiFi-event] event: 4
+[WiFi-event] event: 7
+WiFi connected
+IP address: 
+192.168.1.88
+RRSI: -40
+Connecting to MQTT...
+[AHTTPS] setDebug( on ) version AsyncHTTPSRequest_Generic v2.0.0
+[AHTTPS] setDebug( on ) version AsyncHTTPSRequest_Generic v2.0.0
+[AHTTPS] open( GET , url = https://worldtimeapi.org/api/timezone/Europe/London.txt
+[AHTTPS] _parseURL(): scheme+host HTTPS:// worldtimeapi.org
+[AHTTPS] Connected to MQTT._parseURL(): port+path+query 
+443 /api/timezone/Europe/London.txt 
+[AHTTPS] open: connecting to hostname = worldtimeapi.org:443
+[AHTTPS] _connect()
+Sending request
+https://worldtimeapi.org/api/timezone/Europe/London.txt
+[AHTTPS] send()
+[AHTTPS] _buildRequest()
+[AHTTPS] _HTTPmethod = 0
+[AHTTPS] GET  /api/timezone/Europe/London.txt  HTTP/1.1
+
+[AHTTPS] write _HTTPmethodStringwithSpace :  GET 
+[AHTTPS] write path :  /api/timezone/Europe/London.txt
+[AHTTPS] write query 
+[AHTTPS] write HTTP/1.1
+[AHTTPS] To write hdr
+[AHTTPS] hdr->name
+[AHTTPS] hdr->value
+[AHTTPS] host : worldtimeapi.org:443 
+
+[AHTTPS] Write hdr done
+[AHTTPS] _buildRequest() done
+[ATCP] _tcp_dns_found: name = worldtimeapi.org , IP = 213.188.196.246
+[ATCP] _tcp_dns_found: arg = 0x3FFD9248
+[ATCP] _handle_async_event: Task Name =  async_tcp_ssl
+[ATCP] _handle_async_event: LWIP_TCP_DNS = 0x3FFD9248
+[ATCP] _handle_async_event: LWIP_TCP_DNS, name = worldtimeapi.org , IP = 213.188.196.246
+[ATCP] _tcp_connected: pcb = 0x3F8487E8
+[ATCP] _handle_async_event: Task Name =  async_tcp_ssl
+[ATCP] _handle_async_event: LWIP_TCP_CONNECTED = 0x3FFD9248 0x3F8487E8
+[ATCP] _handle_async_event: LWIP_TCP_CONNECTED =  0
+Session present: 0
+Starting scan of i2c
+[ATCP] _tcp_sent: pcb = 0x3F8487E8
+[ATCP] [ATCP] _tcp_recv: pcb = 0x3F8487E8
+_handle_async_event: Task Name =  async_tcp_ssl
+[ATCP] _handle_async_event: LWIP_TCP_SENT = 0x3F8487E8
+[ATCP] _tcp_recv: pcb = 0x3F8487E8
+[ATCP] _sent: len = 305
+[ATCP] _handle_async_event: Task Name =  async_tcp_ssl
+[ATCP] _tcp_recv: pcb = 0x3F8487E8
+[ATCP] _handle_async_event: LWIP_TCP_RECV = 0x3F8487E8
+[ATCP] _recv: tot_len = 1436
+[ATCP] _handle_async_event: Task Name =  async_tcp_ssl
+[ATCP] _handle_async_event: LWIP_TCP_RECV = 0x3F8487E8
+[ATCP] _recv: tot_len = 1436
+[ATCP] _handle_async_event: Task Name =  async_tcp_ssl
+[ATCP] _handle_async_event: LWIP_TCP_RECV = 0x3F8487E8
+[ATCP] _recv: tot_len = 1211
+[ATCP] _tcp_poll: pcb = 0x3F8487E8
+[ATCP] _tcp_poll: pcb = 0x3F8487E8
+[ATCP] _tcp_poll: pcb = 0x3F8487E8
+[ATCP] _tcp_poll: pcb = 0x3F8487E8
+[ATCP] _tcp_poll: pcb = 0x3F8487E8
+[ATCP] _tcp_poll: pcb = 0x3F8487E8
+[ATCP] _handle_async_event: Task Name =  async_tcp_ssl
+[ATCP] _handle_async_event: LWIP_TCP_POLL = 0x3F8487E8
+[AHTTPS] 
+_onDisconnect handler
+[AHTTPS] _setReadyState : 4
+
+**************************************
+[AHTTPS] responseLongText()
+[AHTTPS] responseText() no data
+
+**************************************
+[AHTTPS] setDebug( off ) version AsyncHTTPSRequest_Generic v2.0.0
+[AHTTPS] _onPoll timeout
+[ATCP] _handle_async_event: Task Name =  async_tcp_ssl
+Scan Complete
+
+

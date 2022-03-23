@@ -42,8 +42,8 @@ AsyncHTTPSRequest request;
 #include <cppQueue.h>
 
 
-//char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents/contents";
-char web_content[] = "https://worldtimeapi.org/api/timezone/Europe/London.txt";
+char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents/contents:443";
+//char web_content[] = "https://worldtimeapi.org/api/timezone/Europe/London.txt";
 // 192.168.1.248
 #define MQTT_HOST IPAddress(192, 168, 1, 248)
 #define MQTT_PORT 1883
