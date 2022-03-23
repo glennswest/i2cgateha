@@ -1,0 +1,1 @@
+mosquitto_pub -V mqttv311 -u device -P device1122 -h 192.168.1.248 -p 1883 -t "homeassistant/switch/bedroom/config" -m '{"name": "bedroom", "command_topic": "homeassistant/switch/bedroom/set", "payload_on": "ON", "payload_off": "OFF", "availability_topic": "homeassistant/switch/bedroom/available", "state_topic": "homeassistant/bedroom/state"}'
