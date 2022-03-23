@@ -5,13 +5,21 @@
 
 The Gateway software runs on a arduino controller, with initial support for a ESP32 base m5stack epaper device. It will in future support additonal hardware platforms based on ESP32 and RP2010.  
 
+## New features
+1. Now uses AsyncTCP
+2. Added support for AsyncMQTT
+3. Add support for AsyncWebServer
+4. Added support for serving static files from sd card
+
 ##Known Issues
+1. Need to impletement linked list for epd update
+2. Need to add relay sets
+3. Need to add mutli-port support (Only 1 at moment, but structure is partially there)
+4. Need to add missing thermistor detection to therm code
+5. Add web gui for config and status (In progress)
+6. Need to remove hard coded mqtt and ap config and move to json (In process)
+
+##Solved Issues
 1. Need to move to mqtt client to async version to fix connection lost
-2. Need to impletement linked list for epd update
-3. Need to add relay sets
-4. Need to add mutli-port support (Only 1 at moment, but structure is partially there)
-5. Need to add missing thermistor detection to therm code
-6. Add web gui for config and status (In progress)
-7. Need to remove hard coded mqtt and ap config and move to json (In process)
 
 
