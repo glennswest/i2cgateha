@@ -1,8 +1,13 @@
+#define _ASYNC_TCP_SSL_LOGLEVEL_     4
+#define _ASYNC_HTTPS_LOGLEVEL_      4
+#define ASYNC_HTTPS_DEBUG_PORT      Serial
+
 #include <AsyncDelay.h>
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <AsyncTCP.h>
+//#include <AsyncTCP_SSL.h>
 
 //#include <ESPmDNS.h>
 
@@ -26,15 +31,19 @@ extern "C" {
 #include <ESPAsyncWebServer.h>
 #include <WebAuthentication.h>
 #include <AsyncWebSynchronization.h>
-//#include <AsyncWebSocket.h>
+
 #include <WebResponseImpl.h>
 #include <StringArray.h>
 
 #include <AsyncMqttClient.h>
+#include <AsyncHTTPSRequest_Generic.h>           // https://github.com/khoih-prog/AsyncHTTPSRequest_Generic
+AsyncHTTPSRequest request;
 
 #include <cppQueue.h>
 
 
+//char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents/contents";
+char web_content[] = "https://worldtimeapi.org/api/timezone/Europe/London.txt";
 // 192.168.1.248
 #define MQTT_HOST IPAddress(192, 168, 1, 248)
 #define MQTT_PORT 1883
@@ -86,6 +95,7 @@ void WiFiEvent(WiFiEvent_t event) {
       Serial.print("RRSI: ");
       Serial.println(WiFi.RSSI()); 
       connectToMqtt();
+      content_update();
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
       Serial.println("WiFi lost connection");
@@ -121,6 +131,46 @@ void initSDCard() {
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
 }
 
+void sendHttpRequest(char *theURL)
+{
+  static bool requestOpenResult;
+  
+  if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
+  {
+    request.setDebug(true);
+    requestOpenResult = request.open("GET", theURL);
+    
+    if (requestOpenResult)
+    {
+      // Only send() if open() returns true, or crash
+      Serial.println("Sending request");
+      Serial.println(theURL);
+      request.send();
+    }
+    else
+    {
+      Serial.println("Can't send bad request");
+    }
+  }
+  else
+  {
+    Serial.println("Can't send request");
+  }
+}
+
+void requestCB(void* optParm, AsyncHTTPSRequest* request, int readyState)
+{
+  (void) optParm;
+  
+  if (readyState == readyStateDone)
+  {
+    Serial.println("\n**************************************");
+    Serial.println(request->responseLongText());
+    Serial.println("**************************************");
+
+    request->setDebug(false);
+  }
+}
 
 void TCA9548A(uint8_t bus)
 {
@@ -663,10 +713,18 @@ void setup() {
   log((char *)"Ready");
   
   websetup();
+  
 }
 
 
-
+void content_update()
+{
+    request.setDebug(true);
+    request.onReadyStateChange(requestCB);
+    sendHttpRequest(web_content);
+    //sendHTTPRequest.start(); //start the ticker.
+    //sendRequest();
+}
 
 void websetup()
 {
