@@ -508,8 +508,10 @@ void onMqttConnect(bool sessionPresent) {
   if (scan_needed == 1) {
      log("Starting scan of i2c");
      scanswitch();
+     log("Scan Complete");
      timer.every(5000, check_temp_sensors);
      scan_needed = 0;
+     server.begin();
      }
 }
 
@@ -634,7 +636,7 @@ void setup() {
 
   initSDCard();
 
-  //server.begin();
+ 
 
 
   canvas.drawString("I2CGateHa", 25, 20);
@@ -660,13 +662,13 @@ void setup() {
   
   log((char *)"Ready");
   
-
+  websetup();
 }
 
 
 
 
-void webloop()
+void websetup()
 {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(SD, "/index.html", "text/html");
@@ -677,5 +679,5 @@ void webloop()
 
 void loop() {
   timer.tick();
-  //webloop();
+  
 }
