@@ -786,12 +786,18 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
   (void) optParm;
   int tsize;
   char *tptr;
-
+  char *sptr;
+  
   if (readyState == readyStateDone)
   {
-    tsize = strlen(request->responseLongText());
-    tptr = (char *)malloc(tsize+1);
-    strcpy(tptr,request->responseLongText());
+    Serial.printf("Got content list\n");
+    
+    tsize = request->responseText().length();
+    Serial.printf("Size = %d\n",tsize);
+    tptr = (char *)malloc(tsize+2);
+    strcpy(tptr,request->responseText().c_str());
+    //strcpy(tptr,request->responseText());
+    Serial.printf("Ptr = %p\n",tptr);
     
     //remote_version = request->responseText().toInt();
     //Serial.printf("Remote Version: %d\n",remote_version);
