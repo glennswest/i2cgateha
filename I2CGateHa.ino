@@ -52,6 +52,8 @@ char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents
 auto timer = timer_create_default();
 
 int scan_needed = 1;
+int local_version;  // Version on SD card of content
+int remote_version; // Version on github
 
 struct tempPtrStruct {
   struct tempSensorStruct *ptr;
@@ -129,14 +131,18 @@ void initSDCard() {
   }
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
+  log("Getting Local Version");
+  local_version = getlocalversion();
 }
 
-void sendHttpRequest(char *theURL)
+void sendHttpRequest(char *theURL,void (*pFunc)(void* optParm, AsyncHTTPSRequest* request, int readyState))
+//void sendHttpRequest(char *theURL)
 {
   static bool requestOpenResult;
-  
   if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
   {
+    request.setTimeout(60);
+    request.onReadyStateChange(pFunc);
     //request.setDebug(true);
     requestOpenResult = request.open("GET", theURL);
     
@@ -342,7 +348,7 @@ void tc_device_set(uint8_t port, uint8_t bus, uint8_t addr, uint8_t chan)
   Wire1.endTransmission();
 }
 
-int tc_stat_clr(uint8_t port, uint8_t bus, uint8_t addr, uint8_t chan)
+void tc_stat_clr(uint8_t port, uint8_t bus, uint8_t addr, uint8_t chan)
 {
   TCA9548A(bus);
   Wire1.beginTransmission(addr);
@@ -559,7 +565,7 @@ void onMqttConnect(bool sessionPresent) {
      log("Starting scan of i2c");
      scanswitch();
      log("Scan Complete");
-     content_update();
+     content_check();
      timer.every(5000, check_temp_sensors);
      scan_needed = 0;
      server.begin();
@@ -718,16 +724,58 @@ void setup() {
 }
 
 
-void content_update()
+int getlocalversion()
 {
-    Serial.println(ASYNC_TCP_SSL_VERSION);
-    //request.setDebug(true);
-    request.setTimeout(60); 
-    request.onReadyStateChange(requestCB);
-    sendHttpRequest(web_content);
-    //sendHTTPRequest.start(); //start the ticker.
-    //sendRequest();
+char versionstr[32];
+int theversion;
+File vfile;
+
+	vfile = SD.open("version");
+        if (vfile){
+           vfile.read((uint8_t * )versionstr,31);
+           vfile.close();
+          } else {
+           strcpy(versionstr,"-1");
+          }
+        theversion = atoi(versionstr);
+        return(theversion);
+
 }
+// Start the content update process
+void content_check()
+{
+    
+    log("Getting Remote Version");
+    //request.onReadyStateChange(requestCB);
+    sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version",remote_version_check);
+    //sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version");
+}
+
+void remote_version_check(void* optParm, AsyncHTTPSRequest* request, int readyState)
+{
+  (void) optParm;
+
+  log("remote_version_check");
+  if (readyState == readyStateDone)
+  {
+    remote_version = request->responseText().toInt();
+    Serial.printf("Remote Version: %d\n",remote_version);
+    Serial.printf("Local Version: %d\n",local_version);
+    request->setDebug(false);
+    if (local_version < remote_version){
+       log("Content Update Needed - Starting");
+       start_content_update();
+       }
+    }
+}
+
+void start_content_update()
+{
+
+
+
+}
+
 
 void websetup()
 {
