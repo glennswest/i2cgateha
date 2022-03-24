@@ -8,6 +8,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 //#include <AsyncTCP_SSL.h>
+#include "queue.h"
 
 //#include <ESPmDNS.h>
 
@@ -43,7 +44,7 @@ AsyncHTTPSRequest request;
 
 //char web_content[] = "https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version";
 //char web_content[] = "https://api.github.com/";
-char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents/contents";
+//char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents/contents";
 //char web_content[] = "https://worldtimeapi.org/api/timezone/Europe/London.txt";
 // 192.168.1.248
 #define MQTT_HOST IPAddress(192, 168, 1, 248)
@@ -70,6 +71,14 @@ typedef struct tempSensorStruct {
 
 cppQueue    sensorList(sizeof(tssptrrec), 100, FIFO);
 
+
+struct content_entry {
+       struct qentry_struct qe;
+       char filename[256];
+       int  todo;
+       };
+
+struct queue_struct content;
 
 const int chipSelect = 4;
 M5EPD_Canvas canvas(&M5.EPD);
@@ -746,16 +755,13 @@ void content_check()
 {
     
     log("Getting Remote Version");
-    //request.onReadyStateChange(requestCB);
     sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version",remote_version_check);
-    //sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version");
 }
 
 void remote_version_check(void* optParm, AsyncHTTPSRequest* request, int readyState)
 {
   (void) optParm;
 
-  log("remote_version_check");
   if (readyState == readyStateDone)
   {
     remote_version = request->responseText().toInt();
@@ -771,11 +777,32 @@ void remote_version_check(void* optParm, AsyncHTTPSRequest* request, int readySt
 
 void start_content_update()
 {
-
-
-
+    log("Getting List of Updated Content");
+    sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.content",get_content_list);
 }
 
+void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
+{
+  (void) optParm;
+  int tsize;
+  char *tptr;
+
+  if (readyState == readyStateDone)
+  {
+    tsize = strlen(request->responseLongText());
+    tptr = (char *)malloc(tsize+1);
+    strcpy(tptr,request->responseLongText());
+    
+    //remote_version = request->responseText().toInt();
+    //Serial.printf("Remote Version: %d\n",remote_version);
+    //Serial.printf("Local Version: %d\n",local_version);
+    //request->setDebug(false);
+    //if (local_version < remote_version){
+       //log("Content Update Needed - Starting");
+       //start_content_update();
+       //}
+    }
+}
 
 void websetup()
 {
