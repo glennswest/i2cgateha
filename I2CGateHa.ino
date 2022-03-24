@@ -1,6 +1,6 @@
-#define _ASYNC_TCP_SSL_LOGLEVEL_     4
-#define _ASYNC_HTTPS_LOGLEVEL_      4
-#define ASYNC_HTTPS_DEBUG_PORT      Serial
+//#define _ASYNC_TCP_SSL_LOGLEVEL_     4
+//#define _ASYNC_HTTPS_LOGLEVEL_      4
+//#define ASYNC_HTTPS_DEBUG_PORT      Serial
 
 #include <AsyncDelay.h>
 #include <Wire.h>
@@ -41,7 +41,8 @@ AsyncHTTPSRequest request;
 
 #include <cppQueue.h>
 
-
+//char web_content[] = "https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version";
+//char web_content[] = "https://api.github.com/";
 char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents/contents";
 //char web_content[] = "https://worldtimeapi.org/api/timezone/Europe/London.txt";
 // 192.168.1.248
@@ -95,7 +96,6 @@ void WiFiEvent(WiFiEvent_t event) {
       Serial.print("RRSI: ");
       Serial.println(WiFi.RSSI()); 
       connectToMqtt();
-      content_update();
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
       Serial.println("WiFi lost connection");
@@ -137,7 +137,7 @@ void sendHttpRequest(char *theURL)
   
   if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
   {
-    request.setDebug(true);
+    //request.setDebug(true);
     requestOpenResult = request.open("GET", theURL);
     
     if (requestOpenResult)
@@ -559,6 +559,7 @@ void onMqttConnect(bool sessionPresent) {
      log("Starting scan of i2c");
      scanswitch();
      log("Scan Complete");
+     content_update();
      timer.every(5000, check_temp_sensors);
      scan_needed = 0;
      server.begin();
@@ -719,7 +720,9 @@ void setup() {
 
 void content_update()
 {
-    request.setDebug(true);
+    Serial.println(ASYNC_TCP_SSL_VERSION);
+    //request.setDebug(true);
+    request.setTimeout(60); 
     request.onReadyStateChange(requestCB);
     sendHttpRequest(web_content);
     //sendHTTPRequest.start(); //start the ticker.
