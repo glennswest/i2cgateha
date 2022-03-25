@@ -149,8 +149,47 @@ void initSDCard() {
   local_version = getlocalversion();
 }
 
+void downloadCB(void *uptr, tsize thesize)
+{
+AsyncHTTPSRequests *req;
+
+     req = (AsyncHTTPSRequests *)uptr;
+
+
+}
+
+void downloadweb(char *theURL,char *theFileName)
+{
+static bool requestOpenResult;
+  if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
+  {
+    request.setTimeout(60);
+    request.onReadyStateChange(pFunc);
+    //request.setDebug(true);
+    requestOpenResult = request.open("GET", theURL);
+
+    if (requestOpenResult)
+    {
+      // Only send() if open() returns true, or crash
+      Serial.println("Sending request");
+      Serial.println(theURL);
+      request.send();
+    }
+    else
+    {
+      Serial.println("Can't send bad request");
+    }
+  }
+  else
+  {
+    Serial.println("Can't send request");
+  }
+
+
+
+}
+
 void sendHttpRequest(char *theURL,void (*pFunc)(void* optParm, AsyncHTTPSRequest* request, int readyState))
-//void sendHttpRequest(char *theURL)
 {
   static bool requestOpenResult;
   if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
