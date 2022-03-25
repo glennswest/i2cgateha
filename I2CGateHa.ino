@@ -98,7 +98,7 @@ AsyncWebServer  server(80);
 String header;
 
 void WiFiEvent(WiFiEvent_t event) {
-  Serial.printf("[WiFi-event] event: %d\n", event);
+  Serial.printf("[WiFi-event] event: %d\n\r", event);
   switch (event) {
     case SYSTEM_EVENT_STA_GOT_IP:
       Serial.println("WiFi connected");
@@ -139,7 +139,7 @@ void initSDCard() {
     Serial.println("UNKNOWN");
   }
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+  Serial.printf("SD Card Size: %lluMB\n\r", cardSize);
   log("Getting Local Version");
   local_version = getlocalversion();
 }
@@ -779,6 +779,7 @@ void start_content_update()
 {
     log("Getting List of Updated Content");
     sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.content",get_content_list);
+    //sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.content",requestCB);
 }
 
 void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
@@ -787,26 +788,41 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
   int tsize;
   char *tptr;
   char *sptr;
+  char *fptr;
+  char *eptr;
   
   if (readyState == readyStateDone)
   {
-    Serial.printf("Got content list\n");
+    Serial.print("Got content list\n");
+    //Serial.println(request->responseLongText());
     
-    tsize = request->responseText().length();
-    Serial.printf("Size = %d\n",tsize);
-    tptr = (char *)malloc(tsize+2);
-    strcpy(tptr,request->responseText().c_str());
-    //strcpy(tptr,request->responseText());
-    Serial.printf("Ptr = %p\n",tptr);
-    
-    //remote_version = request->responseText().toInt();
-    //Serial.printf("Remote Version: %d\n",remote_version);
-    //Serial.printf("Local Version: %d\n",local_version);
-    //request->setDebug(false);
-    //if (local_version < remote_version){
-       //log("Content Update Needed - Starting");
-       //start_content_update();
-       //}
+    tsize = strlen(request->responseLongText());
+    Serial.printf("Size = %d\n\r",tsize);
+
+    tptr = (char *)malloc(tsize+4);
+    if (tptr == NULL){
+       log("ERROR: Not enough memory for malloc");
+       return;
+       }
+    //request->responseText().toCharArray(tptr,tsize);
+    strcpy(tptr,(char *)request->responseLongText());
+    tsize = strlen(tptr);
+    Serial.printf("Size = %d\n\r",tsize);
+    log(tptr);
+    log("Doing strchr");
+    fptr = tptr;
+    eptr = strchr(tptr,'\r');
+    if (eptr == NULL){
+       Serial.println("No data");
+       return;
+       }
+    while(eptr != NULL){
+       *eptr = 0;
+       Serial.println(fptr);
+       fptr = eptr++;
+       eptr = strchr(fptr,'\r');
+       }
+    free(tptr);
     }
 }
 
