@@ -786,44 +786,32 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
 {
   (void) optParm;
   int tsize;
-  char *tptr;
-  char *sptr;
-  char *fptr;
-  char *eptr;
+  int tbeg;
+  int toff;
+  String filename;
   
   if (readyState == readyStateDone)
   {
     Serial.print("Got content list\n");
     //Serial.println(request->responseLongText());
     
-    tsize = strlen(request->responseLongText());
+    tsize = request->responseText().length();
     Serial.printf("Size = %d\n\r",tsize);
-
-    tptr = (char *)malloc(tsize+4);
-    if (tptr == NULL){
-       log("ERROR: Not enough memory for malloc");
+    tbeg = 0;
+    toff = request->responseText().indexOf(char(10));
+    Serial.printf("Off = %d\n",toff);
+    if (toff == -1 ){
+       log("No Data");
        return;
        }
-    //request->responseText().toCharArray(tptr,tsize);
-    strcpy(tptr,(char *)request->responseLongText());
-    tsize = strlen(tptr);
-    Serial.printf("Size = %d\n\r",tsize);
-    log(tptr);
-    log("Doing strchr");
-    fptr = tptr;
-    eptr = strchr(tptr,'\r');
-    if (eptr == NULL){
-       Serial.println("No data");
-       return;
-       }
-    while(eptr != NULL){
-       *eptr = 0;
-       Serial.println(fptr);
-       fptr = eptr++;
-       eptr = strchr(fptr,'\r');
-       }
-    free(tptr);
-    }
+    Serial.printf("Process toff\n");
+    while(toff > 0){
+      filename = request->responseText().substring(tbeg,toff);
+      Serial.printf("Filename: %s\n\r",filename.c_str());
+      tbeg = toff + 1;
+      toff = request->responseText().indexOf(char(10));
+      }
+   }
 }
 
 void websetup()
