@@ -42,11 +42,6 @@ AsyncHTTPSRequest request;
 
 #include <cppQueue.h>
 
-//char web_content[] = "https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version";
-//char web_content[] = "https://api.github.com/";
-//char web_content[] = "https://api.github.com/repos/glennswest/i2cgateha/contents/contents";
-//char web_content[] = "https://worldtimeapi.org/api/timezone/Europe/London.txt";
-// 192.168.1.248
 #define MQTT_HOST IPAddress(192, 168, 1, 248)
 #define MQTT_PORT 1883
 
@@ -72,13 +67,17 @@ typedef struct tempSensorStruct {
 cppQueue    sensorList(sizeof(tssptrrec), 100, FIFO);
 
 
+#define DL_STATE_DOWNLOAD_NEEDED  1
+#define DL_STATE_DOWNLOAD_STARTED 2
+#define DL_STATE_DOWNLOAD_DONE    3
+#define DL_STATE_DOWNLOAD_FAILED  4
 struct content_entry {
        struct qentry_struct qe;
-       char filename[256];
-       int  todo;
+       char filename[64];
+       int  state;
        };
 
-struct queue_struct content;
+struct queue_struct dl_q;
 
 const int chipSelect = 4;
 M5EPD_Canvas canvas(&M5.EPD);
@@ -428,6 +427,34 @@ void start_content_update()
     //sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.content",requestCB);
 }
 
+void start_downloading()
+{
+
+
+}
+
+void add_download(char *filename)
+{
+struct content_entry *dl;
+
+    if (strlen(filename) == 0){
+       log("Ignoring empty filename");
+       return;
+       }
+    dl = (struct content_entry *)malloc(sizeof(struct content_entry));
+    if (dl == NULL){
+         log("Malloc Failed for add_download");
+         return;
+         }
+    strcpy(dl->filename,filename);
+    dl->state = DL_STATE_DOWNLOAD_NEEDED;
+    if (dl_q.head == NULL){ // Nothing on queue
+       queue(&dl_q,&dl->qe);
+       start_downloading();
+       } else {
+       queue(&dl_q,&dl->qe);
+       }
+}
 void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
 {
   (void) optParm;
@@ -447,7 +474,7 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
     tsize = strlen(work);
     Serial.printf("Size = %d\n\r",tsize);
     fptr = work;
-    eptr = strchr(fptr,' ');
+    eptr = strchr(fptr,0x0A);
     if (eptr == NULL){
        log("No Data");
        return;
@@ -457,11 +484,13 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
       eptr++;
       strcpy(filename,fptr);
       Serial.printf("Filename: %s\n\r",filename);
+      add_download(filename);
       fptr = eptr;
-      eptr = strchr(fptr,' ');
+      eptr = strchr(fptr,0x0A);
       }
    strcpy(filename,fptr);
    Serial.printf("Filename: %s\n\r",filename);
+   add_download(filename);
    }
 }
 
