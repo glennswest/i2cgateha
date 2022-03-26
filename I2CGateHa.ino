@@ -149,45 +149,6 @@ void initSDCard() {
   local_version = getlocalversion();
 }
 
-void downloadCB(void *uptr, tsize thesize)
-{
-AsyncHTTPSRequests *req;
-
-     req = (AsyncHTTPSRequests *)uptr;
-
-
-}
-
-void downloadweb(char *theURL,char *theFileName)
-{
-static bool requestOpenResult;
-  if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
-  {
-    request.setTimeout(60);
-    request.onReadyStateChange(pFunc);
-    //request.setDebug(true);
-    requestOpenResult = request.open("GET", theURL);
-
-    if (requestOpenResult)
-    {
-      // Only send() if open() returns true, or crash
-      Serial.println("Sending request");
-      Serial.println(theURL);
-      request.send();
-    }
-    else
-    {
-      Serial.println("Can't send bad request");
-    }
-  }
-  else
-  {
-    Serial.println("Can't send request");
-  }
-
-
-
-}
 
 void sendHttpRequest(char *theURL,void (*pFunc)(void* optParm, AsyncHTTPSRequest* request, int readyState))
 {
@@ -471,31 +432,36 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
 {
   (void) optParm;
   int tsize;
-  int tbeg;
-  int toff;
-  String filename;
+  char filename[32];
+  char work[2048];
+  char *fptr;
+  char *eptr;
+
   
   if (readyState == readyStateDone)
   {
     Serial.print("Got content list\n");
-    //Serial.println(request->responseLongText());
+    strcpy(work,request->responseLongText());
+    Serial.println(work);
     
-    tsize = request->responseText().length();
+    tsize = strlen(work);
     Serial.printf("Size = %d\n\r",tsize);
-    tbeg = 0;
-    toff = request->responseText().indexOf(char(10));
-    Serial.printf("Off = %d\n",toff);
-    if (toff == -1 ){
+    fptr = work;
+    eptr = strchr(fptr,' ');
+    if (eptr == NULL){
        log("No Data");
        return;
        }
-    Serial.printf("Process toff\n");
-    while(toff > 0){
-      filename = request->responseText().substring(tbeg,toff);
-      Serial.printf("Filename: %s\n\r",filename.c_str());
-      tbeg = toff + 1;
-      toff = request->responseText().indexOf(char(10));
+    while(eptr != NULL){
+      *eptr = 0;
+      eptr++;
+      strcpy(filename,fptr);
+      Serial.printf("Filename: %s\n\r",filename);
+      fptr = eptr;
+      eptr = strchr(fptr,' ');
       }
+   strcpy(filename,fptr);
+   Serial.printf("Filename: %s\n\r",filename);
    }
 }
 
