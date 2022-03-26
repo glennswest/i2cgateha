@@ -75,9 +75,11 @@ struct content_entry {
        struct qentry_struct qe;
        char filename[64];
        int  state;
+       File dfile;
        };
 
 struct queue_struct dl_q;
+struct content_entry *cur_dl;
 
 const int chipSelect = 4;
 M5EPD_Canvas canvas(&M5.EPD);
@@ -146,6 +148,36 @@ void initSDCard() {
   Serial.printf("SD Card Size: %lluMB\n\r", cardSize);
   log("Getting Local Version");
   local_version = getlocalversion();
+}
+
+
+void sendDownloadReq(char *theURL,void (*stateCB)(void* optParm, AsyncHTTPSRequest* request, int readyState),void (*dataCB)(void* optParm, AsyncHTTPSRequest* request, int readyState))
+{
+  static bool requestOpenResult;
+  if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
+  {
+    request.setTimeout(60);
+    request.onReadyStateChange(stateCB);
+    request.onData(dataCB);
+    //request.setDebug(true);
+    requestOpenResult = request.open("GET", theURL);
+
+    if (requestOpenResult)
+    {
+      // Only send() if open() returns true, or crash
+      Serial.println("Sending request");
+      Serial.println(theURL);
+      request.send();
+    }
+    else
+    {
+      Serial.println("Can't send bad request");
+    }
+  }
+  else
+  {
+    Serial.println("Can't send request");
+  }
 }
 
 
@@ -427,10 +459,68 @@ void start_content_update()
     //sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.content",requestCB);
 }
 
+void download_done(void *optParm, AsyncHTTPSRequest *request, int readyState)
+{
+char message[256];
+
+   if (readyState == readyStateDone){
+      sprintf("Download done: ", cur_dl->filename);
+      cur_dl->dfile.close();
+      if (cur_dl == (struct content_entry *)dl_q.tail){
+         unqueue(&dl_q); 
+         }
+      start_downloading();
+      }
+}
+
+void download_data(void *xo, AsyncHTTPSRequest *request, int available)
+{
+char message[128];
+
+    if (available > 0){
+       sprintf("Downloading %s - %d bytes",cur_dl->filename,available);
+       log(message);
+       cur_dl->dfile.write((uint8_t *)request->responseLongText(),available);
+       }
+
+}
+
 void start_downloading()
 {
+char theurl[256];
+char dirpath[256];
+char *filename;
 
-
+    cur_dl = (struct content_entry *)dl_q.tail;
+    if (cur_dl == NULL){
+       log("No Downloads");
+       return;
+       }
+    if (cur_dl->state != DL_STATE_DOWNLOAD_NEEDED){
+       log("Wrong Download State to start");
+       return;
+       }
+    strcpy(theurl,"https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/");
+    strcat(theurl,cur_dl->filename);
+    strcpy(dirpath,cur_dl->filename);
+    filename = strrchr(dirpath,'/');
+    if (filename == NULL){
+       filename = dirpath;
+      } else {
+       *filename = 0; // Terminate the directory path
+       filename++;    // Put it to beginning of filename
+       SD.mkdir(dirpath);
+      }
+    cur_dl->dfile = SD.open(filename);
+    if (cur_dl->dfile){
+       log("File Open");
+       } else {
+       log("Downloads ABORTED");
+       return;
+       }
+ 
+    log("Send Download Request");
+    sendDownloadReq(theurl,download_done,download_data);
 }
 
 void add_download(char *filename)
@@ -448,18 +538,13 @@ struct content_entry *dl;
          }
     strcpy(dl->filename,filename);
     dl->state = DL_STATE_DOWNLOAD_NEEDED;
-    if (dl_q.head == NULL){ // Nothing on queue
-       queue(&dl_q,&dl->qe);
-       start_downloading();
-       } else {
-       queue(&dl_q,&dl->qe);
-       }
+    queue(&dl_q,&dl->qe);
 }
 void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
 {
   (void) optParm;
   int tsize;
-  char filename[32];
+  char filename[64];
   char work[2048];
   char *fptr;
   char *eptr;
@@ -469,7 +554,6 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
   {
     Serial.print("Got content list\n");
     strcpy(work,request->responseLongText());
-    Serial.println(work);
     
     tsize = strlen(work);
     Serial.printf("Size = %d\n\r",tsize);
@@ -491,6 +575,7 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
    strcpy(filename,fptr);
    Serial.printf("Filename: %s\n\r",filename);
    add_download(filename);
+   start_downloading();
    }
 }
 
