@@ -490,6 +490,7 @@ void start_downloading()
 char theurl[256];
 char dirpath[256];
 char *filename;
+char message[256];
 
     cur_dl = (struct content_entry *)dl_q.tail;
     if (cur_dl == NULL){
@@ -515,7 +516,8 @@ char *filename;
     if (cur_dl->dfile){
        log("File Open");
        } else {
-       log("Downloads ABORTED");
+       sprintf(message,"Open Failed: %s(%d)",filename,strlen(filename));
+       log(message);
        return;
        }
  
