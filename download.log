@@ -1,0 +1,457 @@
+14:01:39.070 -> M5EPD initializing...OK
+14:01:42.961 -> Booting
+14:01:43.550 -> SD Card Ready
+14:01:44.190 -> Card Size: 15634MB
+14:01:45.440 -> Connecting to Wi-Fi...
+14:01:45.440 -> [WiFi-event] event: 0
+14:01:45.440 -> 
+[WiFi-event] event: 2
+14:01:45.544 -> 
+Ready
+14:01:47.665 -> [WiFi-event] event: 4
+14:01:47.665 -> 
+[WiFi-event] event: 7
+14:01:47.698 -> 
+WiFi connected
+14:01:47.698 -> IP address: 
+14:01:47.698 -> 192.168.1.88
+14:01:47.698 -> RRSI: -36
+14:01:47.698 -> Connecting to MQTT...
+14:01:48.461 -> Connected to MQTT.
+14:01:49.073 -> Session present: 0
+14:01:49.073 -> Starting scan of i2c
+14:01:51.883 -> Scan Complete
+14:01:52.532 -> Getting Remote Version
+14:01:53.166 -> Sending request
+14:01:53.166 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version
+14:01:54.841 -> Remote Version: 1
+14:01:54.841 -> Local Version: -1
+14:01:54.841 -> Content Update Needed - Starting
+14:01:55.478 -> Getting List of Updated Content
+14:01:56.128 -> Sending request
+14:01:56.128 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.content
+14:01:56.164 -> Got content list
+14:01:56.164 -> Size = 764
+14:01:56.164 -> 
+Filename: index.html
+14:01:56.164 -> 
+Filename: jquery-ui.min.css
+14:01:56.164 -> 
+Filename: jquery-ui.theme.min.css
+14:01:56.164 -> 
+Filename: jquery-ui.theme.css
+14:01:56.164 -> 
+Filename: images/ui-icons_ef8c08_256x240.png
+14:01:56.164 -> 
+Filename: images/ui-bg_diagonals-thick_18_b81900_40x40.png
+14:01:56.164 -> 
+Filename: images/ui-bg_glass_100_f6f6f6_1x400.png
+14:01:56.198 -> 
+Filename: images/ui-bg_gloss-wave_35_f6a828_500x100.png
+14:01:56.198 -> 
+Filename: images/ui-bg_highlight-soft_100_eeeeee_1x100.png
+14:01:56.198 -> 
+Filename: images/ui-bg_highlight-soft_75_ffe45c_1x100.png
+14:01:56.198 -> 
+Filename: images/ui-bg_glass_65_ffffff_1x400.png
+14:01:56.198 -> 
+Filename: images/ui-icons_228ef1_256x240.png
+14:01:56.198 -> 
+Filename: images/ui-bg_diagonals-thick_20_666666_40x40.png
+14:01:56.198 -> 
+Filename: images/ui-bg_glass_100_fdf5ce_1x400.png
+14:01:56.235 -> 
+Filename: images/ui-icons_ffffff_256x240.png
+14:01:56.235 -> 
+Filename: images/ui-icons_222222_256x240.png
+14:01:56.235 -> 
+Filename: images/ui-icons_ffd27a_256x240.png
+14:01:56.235 -> 
+Filename: .content
+14:01:56.235 -> 
+Filename: jquery-3.6.0.min.js
+14:01:56.235 -> 
+Filename: jquery-ui.css
+14:01:56.235 -> 
+Filename: package.json
+14:01:56.235 -> 
+Filename: jquery-ui.structure.min.css
+14:01:56.235 -> 
+Filename: .version
+14:01:56.235 -> 
+Filename: external/jquery/jquery.js
+14:01:56.235 -> 
+Filename: jquery-ui.structure.css
+14:01:56.235 -> 
+Filename: jquery-ui.js
+14:01:56.235 -> 
+Filename: 
+14:01:56.235 -> 
+Ignoring empty filename
+14:01:56.874 -> Starting download for: jquery-ui.js
+14:01:56.874 -> 
+14:01:57.516 -> Removing jquery-ui.js
+14:01:58.145 -> Remove done
+14:01:58.754 -> Opening file
+14:01:59.398 -> File Open
+14:02:00.032 -> Send Download Request
+14:02:00.665 -> sendDownloadReq
+14:02:00.665 -> Download done jquery-ui.js - state 1
+14:02:00.665 -> Sending request
+14:02:00.665 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-ui.js
+14:02:00.878 -> Download done jquery-ui.js - state 2
+14:02:00.878 -> Download done jquery-ui.js - state 3
+14:02:12.951 -> Download done jquery-ui.js - state 4
+14:02:12.988 -> Download done: Starting download for: jquery-ui.structure.css
+14:02:12.988 -> 
+14:02:13.598 -> Removing jquery-ui.structure.css
+14:02:14.276 -> Remove done
+14:02:14.881 -> Opening file
+14:02:15.525 -> File Open
+14:02:16.170 -> Send Download Request
+14:02:16.774 -> sendDownloadReq
+14:02:16.774 -> Sending request
+14:02:16.774 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-ui.structure.css
+14:02:17.997 -> Download done jquery-ui.structure.css - state 1
+14:02:18.171 -> Download done jquery-ui.structure.css - state 2
+14:02:18.208 -> Download done jquery-ui.structure.css - state 3
+14:02:23.481 -> Download done jquery-ui.structure.css - state 4
+14:02:23.481 -> Download done: Starting download for: external/jquery/jquery.js
+14:02:23.481 -> 
+14:02:24.118 -> Removing external/jquery/jquery.js
+14:02:24.781 -> Remove done
+14:02:25.391 -> Opening file
+14:02:26.026 -> File Open
+14:02:26.636 -> Send Download Request
+14:02:27.279 -> sendDownloadReq
+14:02:27.312 -> Sending request
+14:02:27.312 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/external/jquery/jquery.js
+14:02:28.414 -> Download done external/jquery/jquery.js - state 1
+14:02:28.523 -> Download done external/jquery/jquery.js - state 2
+14:02:28.523 -> Download done external/jquery/jquery.js - state 3
+14:02:37.523 -> Download done external/jquery/jquery.js - state 4
+14:02:37.523 -> Download done: Starting download for: .version
+14:02:37.523 -> 
+14:02:38.149 -> Removing .version
+14:02:38.799 -> Remove done
+14:02:39.406 -> Opening file
+14:02:40.043 -> File Open
+14:02:40.676 -> Send Download Request
+14:02:41.293 -> sendDownloadReq
+14:02:41.293 -> Sending request
+14:02:41.331 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version
+14:02:42.563 -> Download done .version - state 1
+14:02:42.596 -> Download done .version - state 2
+14:02:42.596 -> Download done .version - state 3
+14:02:42.633 -> Download done .version - state 4
+14:02:42.633 -> Download done: Starting download for: jquery-ui.structure.min.css
+14:02:42.633 -> 
+14:02:43.238 -> Removing jquery-ui.structure.min.css
+14:02:43.881 -> Remove done
+14:02:44.525 -> Opening file
+14:02:45.163 -> File Open
+14:02:45.799 -> Send Download Request
+14:02:46.418 -> sendDownloadReq
+14:02:46.418 -> Download done jquery-ui.structure.min.css - state 1
+14:02:46.455 -> Sending request
+14:02:46.455 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-ui.structure.min.css
+14:02:46.671 -> Download done jquery-ui.structure.min.css - state 2
+14:02:46.671 -> Download done jquery-ui.structure.min.css - state 3
+14:02:52.005 -> Download done jquery-ui.structure.min.css - state 4
+14:02:52.005 -> Download done: Starting download for: package.json
+14:02:52.038 -> 
+14:02:52.680 -> Removing package.json
+14:02:53.329 -> Remove done
+14:02:53.919 -> Opening file
+14:02:54.568 -> File Open
+14:02:55.215 -> Send Download Request
+14:02:55.844 -> sendDownloadReq
+14:02:55.844 -> Sending request
+14:02:55.844 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/package.json
+14:02:57.020 -> Download done package.json - state 1
+14:02:57.196 -> Download done package.json - state 2
+14:02:57.196 -> Download done package.json - state 3
+14:03:02.517 -> Download done package.json - state 4
+14:03:02.517 -> Download done: Starting download for: jquery-ui.css
+14:03:02.552 -> 
+14:03:03.165 -> Removing jquery-ui.css
+14:03:03.810 -> Remove done
+14:03:04.451 -> Opening file
+14:03:05.100 -> File Open
+14:03:05.713 -> Send Download Request
+14:03:06.349 -> sendDownloadReq
+14:03:06.349 -> Sending request
+14:03:06.349 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-ui.css
+14:03:07.599 -> Download done jquery-ui.css - state 1
+14:03:07.742 -> Download done jquery-ui.css - state 2
+14:03:07.742 -> Download done jquery-ui.css - state 3
+14:03:13.519 -> Download done jquery-ui.css - state 4
+14:03:13.519 -> Download done: Starting download for: jquery-3.6.0.min.js
+14:03:13.557 -> 
+14:03:14.163 -> Removing jquery-3.6.0.min.js
+14:03:14.817 -> Remove done
+14:03:15.455 -> Opening file
+14:03:16.099 -> File Open
+14:03:16.713 -> Send Download Request
+14:03:17.350 -> sendDownloadReq
+14:03:17.350 -> Sending request
+14:03:17.350 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-3.6.0.min.js
+14:03:18.506 -> Download done jquery-3.6.0.min.js - state 1
+14:03:18.715 -> Download done jquery-3.6.0.min.js - state 2
+14:03:18.715 -> Download done jquery-3.6.0.min.js - state 3
+14:03:25.014 -> Download done jquery-3.6.0.min.js - state 4
+14:03:25.050 -> Download done: Starting download for: .content
+14:03:25.050 -> 
+14:03:25.666 -> Removing .content
+14:03:26.314 -> Remove done
+14:03:26.952 -> Opening file
+14:03:27.595 -> File Open
+14:03:28.197 -> Send Download Request
+14:03:28.831 -> sendDownloadReq
+14:03:28.831 -> Sending request
+14:03:28.831 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.content
+14:03:30.301 -> Download done .content - state 1
+14:03:30.478 -> Download done .content - state 2
+14:03:30.515 -> Download done .content - state 3
+14:03:30.515 -> Download done .content - state 4
+14:03:30.515 -> Download done: Starting download for: images/ui-icons_ffd27a_256x240.png
+14:03:30.515 -> 
+14:03:31.127 -> Removing images/ui-icons_ffd27a_256x240.png
+14:03:31.778 -> Remove done
+14:03:32.388 -> Opening file
+14:03:33.028 -> File Open
+14:03:33.680 -> Send Download Request
+14:03:34.314 -> sendDownloadReq
+14:03:34.314 -> Download done images/ui-icons_ffd27a_256x240.png - state 1
+14:03:34.314 -> Sending request
+14:03:34.314 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-icons_ffd27a_256x240.png
+14:03:34.492 -> Download done images/ui-icons_ffd27a_256x240.png - state 2
+14:03:34.492 -> Download done images/ui-icons_ffd27a_256x240.png - state 3
+14:03:40.056 -> Download done images/ui-icons_ffd27a_256x240.png - state 4
+14:03:40.056 -> Download done: Starting download for: images/ui-icons_222222_256x240.png
+14:03:40.056 -> 
+14:03:40.701 -> Removing images/ui-icons_222222_256x240.png
+14:03:41.352 -> Remove done
+14:03:41.964 -> Opening file
+14:03:42.614 -> File Open
+14:03:43.230 -> Send Download Request
+14:03:43.865 -> sendDownloadReq
+14:03:43.865 -> Sending request
+14:03:43.865 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-icons_222222_256x240.png
+14:03:45.077 -> Download done images/ui-icons_222222_256x240.png - state 1
+14:03:45.261 -> Download done images/ui-icons_222222_256x240.png - state 2
+14:03:45.261 -> Download done images/ui-icons_222222_256x240.png - state 3
+14:03:50.536 -> Download done images/ui-icons_222222_256x240.png - state 4
+14:03:50.536 -> Download done: Starting download for: images/ui-icons_ffffff_256x240.png
+14:03:50.574 -> 
+14:03:51.185 -> Removing images/ui-icons_ffffff_256x240.png
+14:03:51.865 -> Remove done
+14:03:52.471 -> Opening file
+14:03:53.126 -> File Open
+14:03:53.754 -> Send Download Request
+14:03:54.394 -> sendDownloadReq
+14:03:54.394 -> Sending request
+14:03:54.394 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-icons_ffffff_256x240.png
+14:03:55.834 -> Download done images/ui-icons_ffffff_256x240.png - state 1
+14:03:55.974 -> Download done images/ui-icons_ffffff_256x240.png - state 2
+14:03:56.007 -> Download done images/ui-icons_ffffff_256x240.png - state 3
+14:04:01.574 -> Download done images/ui-icons_ffffff_256x240.png - state 4
+14:04:01.574 -> Download done: Starting download for: images/ui-bg_glass_100_fdf5ce_1x400.png
+14:04:01.574 -> 
+14:04:02.201 -> Removing images/ui-bg_glass_100_fdf5ce_1x400.png
+14:04:02.871 -> Remove done
+14:04:03.516 -> Opening file
+14:04:04.162 -> File Open
+14:04:04.800 -> Send Download Request
+14:04:05.402 -> sendDownloadReq
+14:04:05.435 -> Sending request
+14:04:05.435 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_glass_100_fdf5ce_1x400.png
+14:04:06.616 -> Download done images/ui-bg_glass_100_fdf5ce_1x400.png - state 1
+14:04:06.724 -> Download done images/ui-bg_glass_100_fdf5ce_1x400.png - state 2
+14:04:06.762 -> Download done images/ui-bg_glass_100_fdf5ce_1x400.png - state 3
+14:04:06.762 -> Download done images/ui-bg_glass_100_fdf5ce_1x400.png - state 4
+14:04:06.762 -> Download done: Starting download for: images/ui-bg_diagonals-thick_20_666666_40x40.png
+14:04:06.762 -> 
+14:04:07.398 -> Removing images/ui-bg_diagonals-thick_20_666666_40x40.png
+14:04:07.999 -> Remove done
+14:04:08.628 -> Opening file
+14:04:09.285 -> File Open
+14:04:09.916 -> Send Download Request
+14:04:10.552 -> sendDownloadReq
+14:04:10.552 -> Download done images/ui-bg_diagonals-thick_20_666666_40x40.png - state 1
+14:04:10.552 -> Sending request
+14:04:10.552 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_diagonals-thick_20_666666_40x40.png
+14:04:10.724 -> Download done images/ui-bg_diagonals-thick_20_666666_40x40.png - state 2
+14:04:10.724 -> Download done images/ui-bg_diagonals-thick_20_666666_40x40.png - state 3
+14:04:10.761 -> Download done images/ui-bg_diagonals-thick_20_666666_40x40.png - state 4
+14:04:10.761 -> Download done: Starting download for: images/ui-icons_228ef1_256x240.png
+14:04:10.761 -> 
+14:04:11.374 -> Removing images/ui-icons_228ef1_256x240.png
+14:04:12.042 -> Remove done
+14:04:12.649 -> Opening file
+14:04:13.297 -> File Open
+14:04:13.943 -> Send Download Request
+14:04:14.548 -> sendDownloadReq
+14:04:14.548 -> Download done images/ui-icons_228ef1_256x240.png - state 1
+14:04:14.582 -> Sending request
+14:04:14.582 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-icons_228ef1_256x240.png
+14:04:14.722 -> Download done images/ui-icons_228ef1_256x240.png - state 2
+14:04:14.722 -> Download done images/ui-icons_228ef1_256x240.png - state 3
+14:04:20.094 -> Download done images/ui-icons_228ef1_256x240.png - state 4
+14:04:20.094 -> Download done: Starting download for: images/ui-bg_glass_65_ffffff_1x400.png
+14:04:20.094 -> 
+14:04:20.735 -> Removing images/ui-bg_glass_65_ffffff_1x400.png
+14:04:21.380 -> Remove done
+14:04:21.983 -> Opening file
+14:04:22.646 -> File Open
+14:04:23.279 -> Send Download Request
+14:04:23.916 -> sendDownloadReq
+14:04:23.916 -> Sending request
+14:04:23.916 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_glass_65_ffffff_1x400.png
+14:04:25.402 -> Download done images/ui-bg_glass_65_ffffff_1x400.png - state 1
+14:04:25.578 -> Download done images/ui-bg_glass_65_ffffff_1x400.png - state 2
+14:04:25.578 -> Download done images/ui-bg_glass_65_ffffff_1x400.png - state 3
+14:04:25.578 -> Download done images/ui-bg_glass_65_ffffff_1x400.png - state 4
+14:04:25.578 -> Download done: Starting download for: images/ui-bg_highlight-soft_75_ffe45c_1x100.png
+14:04:25.616 -> 
+14:04:26.245 -> Removing images/ui-bg_highlight-soft_75_ffe45c_1x100.png
+14:04:26.879 -> Remove done
+14:04:27.495 -> Opening file
+14:04:28.168 -> File Open
+14:04:28.808 -> Send Download Request
+14:04:29.424 -> sendDownloadReq
+14:04:29.424 -> Download done images/ui-bg_highlight-soft_75_ffe45c_1x100.png - state 1
+14:04:29.459 -> Sending request
+14:04:29.459 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_highlight-soft_75_ffe45c_1x100.png
+14:04:29.569 -> Download done images/ui-bg_highlight-soft_75_ffe45c_1x100.png - state 2
+14:04:29.569 -> Download done images/ui-bg_highlight-soft_75_ffe45c_1x100.png - state 3
+14:04:29.604 -> Download done images/ui-bg_highlight-soft_75_ffe45c_1x100.png - state 4
+14:04:29.604 -> Download done: Starting download for: images/ui-bg_highlight-soft_100_eeeeee_1x100.png
+14:04:29.604 -> 
+14:04:30.236 -> Removing images/ui-bg_highlight-soft_100_eeeeee_1x100.png
+14:04:30.880 -> Remove done
+14:04:31.492 -> Opening file
+14:04:32.131 -> File Open
+14:04:32.750 -> Send Download Request
+14:04:33.385 -> sendDownloadReq
+14:04:33.385 -> Download done images/ui-bg_highlight-soft_100_eeeeee_1x100.png - state 1
+14:04:33.422 -> Sending request
+14:04:33.422 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_highlight-soft_100_eeeeee_1x100.png
+14:04:33.566 -> Download done images/ui-bg_highlight-soft_100_eeeeee_1x100.png - state 2
+14:04:33.566 -> Download done images/ui-bg_highlight-soft_100_eeeeee_1x100.png - state 3
+14:04:33.566 -> Download done images/ui-bg_highlight-soft_100_eeeeee_1x100.png - state 4
+14:04:33.601 -> Download done: Starting download for: images/ui-bg_gloss-wave_35_f6a828_500x100.png
+14:04:33.601 -> 
+14:04:34.237 -> Removing images/ui-bg_gloss-wave_35_f6a828_500x100.png
+14:04:34.881 -> Remove done
+14:04:35.484 -> Opening file
+14:04:36.131 -> File Open
+14:04:36.783 -> Send Download Request
+14:04:37.401 -> sendDownloadReq
+14:04:37.401 -> Download done images/ui-bg_gloss-wave_35_f6a828_500x100.png - state 1
+14:04:37.401 -> Sending request
+14:04:37.401 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_gloss-wave_35_f6a828_500x100.png
+14:04:37.569 -> Download done images/ui-bg_gloss-wave_35_f6a828_500x100.png - state 2
+14:04:37.569 -> Download done images/ui-bg_gloss-wave_35_f6a828_500x100.png - state 3
+14:04:43.101 -> Download done images/ui-bg_gloss-wave_35_f6a828_500x100.png - state 4
+14:04:43.101 -> Download done: Starting download for: images/ui-bg_glass_100_f6f6f6_1x400.png
+14:04:43.136 -> 
+14:04:43.751 -> Removing images/ui-bg_glass_100_f6f6f6_1x400.png
+14:04:44.429 -> Remove done
+14:04:45.030 -> Opening file
+14:04:45.696 -> File Open
+14:04:46.319 -> Send Download Request
+14:04:46.966 -> sendDownloadReq
+14:04:46.966 -> Sending request
+14:04:46.966 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_glass_100_f6f6f6_1x400.png
+14:04:48.338 -> Download done images/ui-bg_glass_100_f6f6f6_1x400.png - state 1
+14:04:48.516 -> Download done images/ui-bg_glass_100_f6f6f6_1x400.png - state 2
+14:04:48.516 -> Download done images/ui-bg_glass_100_f6f6f6_1x400.png - state 3
+14:04:48.516 -> Download done images/ui-bg_glass_100_f6f6f6_1x400.png - state 4
+14:04:48.549 -> Download done: Starting download for: images/ui-bg_diagonals-thick_18_b81900_40x40.png
+14:04:48.549 -> 
+14:04:49.155 -> Removing images/ui-bg_diagonals-thick_18_b81900_40x40.png
+14:04:49.799 -> Remove done
+14:04:50.417 -> Opening file
+14:04:51.087 -> File Open
+14:04:51.704 -> Send Download Request
+14:04:52.320 -> sendDownloadReq
+14:04:52.320 -> Download done images/ui-bg_diagonals-thick_18_b81900_40x40.png - state 1
+14:04:52.320 -> Sending request
+14:04:52.320 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-bg_diagonals-thick_18_b81900_40x40.png
+14:04:52.501 -> Download done images/ui-bg_diagonals-thick_18_b81900_40x40.png - state 2
+14:04:52.538 -> Download done images/ui-bg_diagonals-thick_18_b81900_40x40.png - state 3
+14:04:52.538 -> Download done images/ui-bg_diagonals-thick_18_b81900_40x40.png - state 4
+14:04:52.538 -> Download done: Starting download for: images/ui-icons_ef8c08_256x240.png
+14:04:52.538 -> 
+14:04:53.179 -> Removing images/ui-icons_ef8c08_256x240.png
+14:04:53.826 -> Remove done
+14:04:54.457 -> Opening file
+14:04:55.093 -> File Open
+14:04:55.739 -> Send Download Request
+14:04:56.345 -> sendDownloadReq
+14:04:56.345 -> Download done images/ui-icons_ef8c08_256x240.png - state 1
+14:04:56.345 -> Sending request
+14:04:56.380 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/images/ui-icons_ef8c08_256x240.png
+14:04:56.596 -> Download done images/ui-icons_ef8c08_256x240.png - state 2
+14:04:56.596 -> Download done images/ui-icons_ef8c08_256x240.png - state 3
+14:05:02.146 -> Download done images/ui-icons_ef8c08_256x240.png - state 4
+14:05:02.146 -> Download done: Starting download for: jquery-ui.theme.css
+14:05:02.146 -> 
+14:05:02.792 -> Removing jquery-ui.theme.css
+14:05:03.446 -> Remove done
+14:05:04.053 -> Opening file
+14:05:04.704 -> File Open
+14:05:05.346 -> Send Download Request
+14:05:05.980 -> sendDownloadReq
+14:05:05.980 -> Sending request
+14:05:05.980 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-ui.theme.css
+14:05:07.642 -> Download done jquery-ui.theme.css - state 1
+14:05:07.754 -> Download done jquery-ui.theme.css - state 2
+14:05:07.792 -> Download done jquery-ui.theme.css - state 3
+14:05:13.155 -> Download done jquery-ui.theme.css - state 4
+14:05:13.155 -> Download done: Starting download for: jquery-ui.theme.min.css
+14:05:13.155 -> 
+14:05:13.785 -> Removing jquery-ui.theme.min.css
+14:05:14.468 -> Remove done
+14:05:15.076 -> Opening file
+14:05:15.720 -> File Open
+14:05:16.367 -> Send Download Request
+14:05:16.998 -> sendDownloadReq
+14:05:16.998 -> Sending request
+14:05:16.998 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-ui.theme.min.css
+14:05:18.280 -> Download done jquery-ui.theme.min.css - state 1
+14:05:18.526 -> Download done jquery-ui.theme.min.css - state 2
+14:05:18.526 -> Download done jquery-ui.theme.min.css - state 3
+14:05:24.147 -> Download done jquery-ui.theme.min.css - state 4
+14:05:24.147 -> Download done: Starting download for: jquery-ui.min.css
+14:05:24.147 -> 
+14:05:24.797 -> Removing jquery-ui.min.css
+14:05:25.436 -> Remove done
+14:05:26.082 -> Opening file
+14:05:26.732 -> File Open
+14:05:27.343 -> Send Download Request
+14:05:27.994 -> sendDownloadReq
+14:05:27.994 -> Sending request
+14:05:27.994 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/jquery-ui.min.css
+14:05:29.403 -> Download done jquery-ui.min.css - state 1
+14:05:29.580 -> Download done jquery-ui.min.css - state 2
+14:05:29.580 -> Download done jquery-ui.min.css - state 3
+14:05:35.181 -> Download done jquery-ui.min.css - state 4
+14:05:35.181 -> Download done: Starting download for: index.html
+14:05:35.181 -> 
+14:05:35.813 -> Removing index.html
+14:05:36.488 -> Remove done
+14:05:37.105 -> Opening file
+14:05:37.750 -> File Open
+14:05:38.368 -> Send Download Request
+14:05:39.010 -> sendDownloadReq
+14:05:39.010 -> Sending request
+14:05:39.010 -> https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/index.html
+14:05:40.210 -> Download done index.html - state 1
+14:05:40.318 -> Download done index.html - state 2
+14:05:40.351 -> Download done index.html - state 3
+14:05:46.169 -> Download done index.html - state 4
+14:05:46.169 -> Download done: No Downloads
+
+

@@ -391,7 +391,7 @@ char versionstr[32];
 int theversion;
 FsFile vfile;
 
-	vfile.open("version",O_RDWR);
+	vfile.open(".version",O_RDWR);
   if (vfile){
      vfile.read((uint8_t * )versionstr,31);
      vfile.close();
