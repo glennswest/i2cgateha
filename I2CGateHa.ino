@@ -1,3 +1,13 @@
+#include <SdFatConfig.h>
+#include <sdios.h>
+#include <SdFat.h>
+
+#define SD_FAT_TYPE 3     // Get us Fat32/ExFat
+#define SPI_SPEED SD_SCK_MHZ(4)
+
+SdFs sd;
+FsFile file;
+
 //#define _ASYNC_TCP_SSL_LOGLEVEL_     4
 //#define _ASYNC_HTTPS_LOGLEVEL_      4
 //#define ASYNC_HTTPS_DEBUG_PORT      Serial
@@ -21,9 +31,7 @@ extern "C" {
 #include <M5EPD.h>
 #include <arduino-timer.h>
 #include <math.h>
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
+
 
 #include <AsyncEventSource.h>
 #include <AsyncJson.h>
@@ -71,11 +79,11 @@ cppQueue    sensorList(sizeof(tssptrrec), 100, FIFO);
 #define DL_STATE_DOWNLOAD_STARTED 2
 #define DL_STATE_DOWNLOAD_DONE    3
 #define DL_STATE_DOWNLOAD_FAILED  4
+FsFile dfile;
 struct content_entry {
        struct qentry_struct qe;
-       char filename[64];
+       char filename[128];
        int  state;
-       File dfile;
        };
 
 struct queue_struct dl_q;
@@ -123,62 +131,28 @@ void WiFiEvent(WiFiEvent_t event) {
 }
 
 void initSDCard() {
-  if (!SD.begin()) {
-    Serial.println("Card Mount Failed");
-    return;
-  }
-  uint8_t cardType = SD.cardType();
+char message[256];
+ 
+  if (!sd.begin(chipSelect, SPI_SPEED)) {
+       log("SD Card Failed to Initialise");
+       log("Functionality will be lost");
+       return;
+       }
+  if (sd.vol()->fatType() == 0) {
+      log("SD Card not formated properly");
+      log("Use SD Assoc Formatter");
+      log("Functionality will be lost");
+    }     
+  uint32_t size = sd.card()->sectorCount();
+  uint32_t sizeMB = 0.000512 * size + 0.5;
+  log("SD Card Ready");
+  sprintf(message,"Card Size: %dMB", sizeMB);
+  log(message);
 
-  if (cardType == CARD_NONE) {
-    Serial.println("No SD card attached");
-    return;
-  }
-
-  Serial.print("SD Card Type: ");
-  if (cardType == CARD_MMC) {
-    Serial.println("MMC");
-  } else if (cardType == CARD_SD) {
-    Serial.println("SDSC");
-  } else if (cardType == CARD_SDHC) {
-    Serial.println("SDHC");
-  } else {
-    Serial.println("UNKNOWN");
-  }
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n\r", cardSize);
-  log("Getting Local Version");
   local_version = getlocalversion();
 }
 
 
-void sendDownloadReq(char *theURL,void (*stateCB)(void* optParm, AsyncHTTPSRequest* request, int readyState),void (*dataCB)(void* optParm, AsyncHTTPSRequest* request, int readyState))
-{
-  static bool requestOpenResult;
-  if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
-  {
-    request.setTimeout(60);
-    request.onReadyStateChange(stateCB);
-    request.onData(dataCB);
-    //request.setDebug(true);
-    requestOpenResult = request.open("GET", theURL);
-
-    if (requestOpenResult)
-    {
-      // Only send() if open() returns true, or crash
-      Serial.println("Sending request");
-      Serial.println(theURL);
-      request.send();
-    }
-    else
-    {
-      Serial.println("Can't send bad request");
-    }
-  }
-  else
-  {
-    Serial.println("Can't send request");
-  }
-}
 
 
 void sendHttpRequest(char *theURL,void (*pFunc)(void* optParm, AsyncHTTPSRequest* request, int readyState))
@@ -359,6 +333,7 @@ void connectToMqtt() {
 }
 
 void setup() {
+  delay(2);
   M5.begin();   //Init M5Paper.
   M5.EPD.SetRotation(90);   //Set the rotation of the display.
   M5.EPD.Clear(true);  //Clear the screen.
@@ -414,17 +389,18 @@ int getlocalversion()
 {
 char versionstr[32];
 int theversion;
-File vfile;
+FsFile vfile;
 
-	vfile = SD.open("version");
-        if (vfile){
-           vfile.read((uint8_t * )versionstr,31);
-           vfile.close();
-          } else {
-           strcpy(versionstr,"-1");
-          }
-        theversion = atoi(versionstr);
-        return(theversion);
+	vfile.open("version",O_RDWR);
+  if (vfile){
+     vfile.read((uint8_t * )versionstr,31);
+     vfile.close();
+     log(versionstr);
+     } else {
+     strcpy(versionstr,"-1");
+     }
+  theversion = atoi(versionstr);
+  return(theversion);
 
 }
 // Start the content update process
@@ -462,10 +438,17 @@ void start_content_update()
 void download_done(void *optParm, AsyncHTTPSRequest *request, int readyState)
 {
 char message[256];
+int remain_length;
 
+   sprintf(message,"Download done callback %s - state %d\n",cur_dl->filename,readyState);
+   Serial.print(message);
    if (readyState == readyStateDone){
-      sprintf("Download done: ", cur_dl->filename);
-      cur_dl->dfile.close();
+      remain_length = request->available();
+      sprintf(message,"Download complete: %s - Remainer: %d\n", cur_dl->filename,remain_length);
+      Serial.print(message);
+      
+      dfile.write((uint8_t *)request->responseLongText(),remain_length);
+      dfile.close();
       if (cur_dl == (struct content_entry *)dl_q.tail){
          unqueue(&dl_q); 
          }
@@ -477,21 +460,54 @@ void download_data(void *xo, AsyncHTTPSRequest *request, int available)
 {
 char message[128];
 
+    //Serial.print("download_data\n");
     if (available > 0){
-       sprintf("Downloading %s - %d bytes",cur_dl->filename,available);
-       log(message);
-       cur_dl->dfile.write((uint8_t *)request->responseLongText(),available);
+       //sprintf(message,"Downloading %s - %d bytes",cur_dl->filename,available);
+       //Serial.print(message);
+       dfile.write((uint8_t *)request->responseLongText(),available);
        }
 
 }
+
+void sendDownloadReq(char *theURL,void (*stateCB)(void* optParm, AsyncHTTPSRequest* request, int readyState),void (*dataCB)(void* optParm, AsyncHTTPSRequest* request, int readyState))
+{
+  static bool requestOpenResult;
+  Serial.print("sendDownloadReq\n");
+  if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
+  {
+    request.setTimeout(5);
+    request.onReadyStateChange(stateCB);
+    request.onData(dataCB);
+    //request.setDebug(true);
+    requestOpenResult = request.open("GET", theURL);
+
+    if (requestOpenResult)
+    {
+      // Only send() if open() returns true, or crash
+      Serial.println("Sending request");
+      Serial.println(theURL);
+      request.send();
+    }
+    else
+    {
+      Serial.println("Can't send bad request");
+    }
+  }
+  else
+  {
+    Serial.println("Can't send request");
+  }
+}
+
 
 void start_downloading()
 {
 char theurl[256];
 char dirpath[256];
-char *filename;
+
 char message[256];
 
+    
     cur_dl = (struct content_entry *)dl_q.tail;
     if (cur_dl == NULL){
        log("No Downloads");
@@ -501,22 +517,26 @@ char message[256];
        log("Wrong Download State to start");
        return;
        }
+    sprintf(message,"Starting download for: %s\n",cur_dl->filename);
+    log(message);   
     strcpy(theurl,"https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/");
     strcat(theurl,cur_dl->filename);
-    strcpy(dirpath,cur_dl->filename);
-    filename = strrchr(dirpath,'/');
-    if (filename == NULL){
-       filename = dirpath;
-      } else {
-       *filename = 0; // Terminate the directory path
-       filename++;    // Put it to beginning of filename
-       SD.mkdir(dirpath);
-      }
-    cur_dl->dfile = SD.open(filename);
-    if (cur_dl->dfile){
+    //strcpy(dirpath,cur_dl->filename);
+    
+     
+    if (sd.exists(cur_dl->filename)){
+        sprintf(message,"Removing %s",cur_dl->filename);
+        log(message); 
+        sd.remove(cur_dl->filename);
+        log("Remove done");
+        }
+   
+    log("Opening file");
+    
+    if (dfile.open(cur_dl->filename, O_WRONLY | O_CREAT)){
        log("File Open");
        } else {
-       sprintf(message,"Open Failed: %s(%d)",filename,strlen(filename));
+       sprintf(message,"Open Failed: %s(%d)",cur_dl->filename,strlen(cur_dl->filename));
        log(message);
        return;
        }
