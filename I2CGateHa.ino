@@ -329,7 +329,8 @@ bool handleStaticFile(AsyncWebServerRequest *request) {
         gzipped = true;
         path += ".gz";
         }    
-    AsyncWebServerResponse *response = request->beginChunkedResponse("text/plain", [path](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {      
+    
+    AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [path](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {      
         return readbigfatsd(path,buffer,index,maxLen);
     });
     response->addHeader("Server","ESP Async Web Server");
