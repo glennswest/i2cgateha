@@ -18,9 +18,18 @@
             ajaxURL: "data/systemsetting.json",
             columns: [
                 {title: "Name",field: "name",width: 150},
-                {title: "Value",field: "val",width: 150}
+                {title: "Value",field: "val",editor:"input",width: 150}
                 ],
-        });
+	});
+      table.on('cellEdited', function(cell){
+              // This callback is called any time a cell is edited.
+              var xdata = cell.getData();
+              ajaxConfig:"POST"
+              var ajaxConfig = {
+                  method:"post" //set request type to Position
+                  };
+              table.setData("data/systemsetting.json?update",xdata,ajaxConfig);
+             });
     </script>
 </body>
 
