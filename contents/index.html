@@ -11,43 +11,15 @@
 </head>
 
 <body>
-
     <div id="SystemSettings"></div>
     <script type="text/javascript">
-        var tabledata = [{
-                id: 1,
-                name: "Device Name",
-                value: "i2cgate1",
-            }, {
-                id: 2,
-                name: "IpAddress",
-                value: "192.168.1.88",
-            }
-        ];
-
         var table = new Tabulator("#SystemSettings", {
             height: 220,
-            data: tabledata,
-            layout: "fitColumns",
-            pagination: "local",
-            paginationSize: 5,
-            tooltips: true,
-            columns: [{
-                    title: "Name",
-                    field: "name",
-                    sorter: "string",
-                    width: 150
-                }, {
-                    title: "Value",
-                    field: "value",
-                    sorter: "string",
-                    width: 150
-                }
-
-            ],
-            rowClick: function(e, row) {
-                alert("Row " + row.getData().id + " Clicked!!!!");
-            },
+            ajaxURL: "data/systemsetting.json",
+            columns: [
+                {title: "Name",field: "name",width: 150},
+                {title: "Value",field: "val",width: 150}
+                ],
         });
     </script>
 </body>
