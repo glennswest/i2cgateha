@@ -1,4 +1,12 @@
 [
-  {"id":1,"name":"DeviceName","val": "i2cgate1"},
-  {"id":2,"name":"IpAddress","val": "192.168.1.88"}
+  {
+    "id": "1",
+    "name": "DeviceName",
+    "val": "i2cgate2"
+  },
+  {
+    "id": "2",
+    "name": "IpAddress",
+    "val": "192.168.1.89"
+  }
 ]
