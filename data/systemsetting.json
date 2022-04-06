@@ -2,11 +2,11 @@
   {
     "id": "1",
     "name": "DeviceName",
-    "val": "i2cgate2"
+    "val": "i2cgate1"
   },
   {
     "id": "2",
     "name": "IpAddress",
-    "val": "192.168.1.89"
+    "val": "192.168.1.90"
   }
 ]
