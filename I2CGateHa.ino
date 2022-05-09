@@ -4,9 +4,14 @@
 #include <SdFatConfig.h>
 #include <sdios.h>
 #include <SdFat.h>
+#include <ESP32Time.h>
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 SdFs sd;
 FsFile file;
+
+ESP32Time rtc;
 
 //#define _ASYNC_TCP_SSL_LOGLEVEL_     4
 //#define _ASYNC_HTTPS_LOGLEVEL_      4
@@ -98,6 +103,7 @@ M5EPD_Canvas canvas(&M5.EPD);
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
 TimerHandle_t wifiReconnectTimer;
+TimerHandle_t displayTimer;
 
 #include "logging.h"
 #include "switch.h"
@@ -114,20 +120,21 @@ const char* mqtt_server = "192.168.1.248";
 
 AsyncWebServer  server(80);
 String header;
+char message[256];
 
 void WiFiEvent(WiFiEvent_t event) {
-  Serial.printf("[WiFi-event] event: %d\n\r", event);
+  
   switch (event) {
     case SYSTEM_EVENT_STA_GOT_IP:
-      Serial.println("WiFi connected");
-      Serial.println("IP address: ");
-      Serial.println(WiFi.localIP()); 
-      Serial.print("RRSI: ");
-      Serial.println(WiFi.RSSI()); 
+      log("WiFi connected");
+      sprintf(message,"IP address: %s",WiFi.localIP().toString());
+      log(message);
+      sprintf(message,"RSSI: %d",WiFi.RSSI());
+      log(message);
       connectToMqtt();
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
-      Serial.println("WiFi lost connection");
+      log("WiFi lost connection");
       xTimerStop(mqttReconnectTimer, 0); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
       xTimerStart(wifiReconnectTimer, 0);
       break;
@@ -154,6 +161,8 @@ char message[256];
   log(message);
 
   local_version = getlocalversion();
+  sprintf(message,"Current Content Version: %d",local_version);
+  log(message);
 }
 
 
@@ -211,8 +220,6 @@ void onMqttConnect(bool sessionPresent) {
   
 
   log("Connected to MQTT.");
-  Serial.print("Session present: ");
-  Serial.println(sessionPresent);
 
   if (scan_needed == 1) {
      log("Starting scan of i2c");
@@ -273,7 +280,7 @@ void onMqttPublish(uint16_t packetId) {
 
 
 void connectToWifi() {
-  Serial.println("Connecting to Wi-Fi...");
+  log("Connecting to Wi-Fi...");
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
  // delay(100);
@@ -290,7 +297,7 @@ void connectToWifi() {
 }
 
 void connectToMqtt() {
-  Serial.println("Connecting to MQTT...");
+  log("Connecting to MQTT...");
   mqttClient.connect();
 }
 
@@ -351,35 +358,30 @@ void websetup()
   server.begin();
 }
 
-void setup() {
+
+
+void setup(){
+
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
+  log_setup();
   delay(2);
+  
   M5.begin();   //Init M5Paper.
   M5.EPD.SetRotation(90);   //Set the rotation of the display.
   M5.EPD.Clear(true);  //Clear the screen.
+  canvas.createCanvas(540, 960);  //Create a canvas.  创建画布
+  
   M5.RTC.begin();  //Init the RTC.  初始化 RTC
   Wire1.begin(25, 32);
-  canvas.createCanvas(540, 960);  //Create a canvas.  创建画布
-  canvas.setTextSize(4); //Set the text size.  设置文字大小
-  canvas.drawString("I2CGateHa", 25, 20);
-  canvas.drawString("I2C Home Assistant Gateway", 25, 45);  //Draw a string.
-  canvas.pushCanvas(0, 0, UPDATE_MODE_DU4); //Update the screen.
-
+  
   Serial.begin(115200);
   log("Booting");
-
-
   
-
-
   initSDCard();
 
+  epdupdate(NULL);
+  timer.every(500, epdupdate);
  
-
-
-  canvas.drawString("I2CGateHa", 25, 20);
-  canvas.drawString("I2C Home Assistant Gateway", 25, 45);  //Draw a string.
-  //canvas.drawString(WiFi.localIP().toString(), 25, 60);
-  canvas.pushCanvas(0, 0, UPDATE_MODE_DU4); //Update the screen.
 
   mqttReconnectTimer = xTimerCreate("mqttTimer", pdMS_TO_TICKS(2000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToMqtt));
   wifiReconnectTimer = xTimerCreate("wifiTimer", pdMS_TO_TICKS(2000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToWifi));
@@ -410,5 +412,6 @@ void setup() {
 
 void loop() {
   timer.tick();
+  //epdupdate();
   
 }

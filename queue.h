@@ -19,6 +19,8 @@ void queue_init(struct queue_struct *q)
 
 void queue(struct queue_struct *q, struct qentry_struct *qe)
 {
+// Queue to tail
+  
      if (q->head == NULL){
          q->head = qe;
          q->tail = qe;
@@ -35,19 +37,14 @@ void queue(struct queue_struct *q, struct qentry_struct *qe)
 struct qentry_struct *unqueue(struct queue_struct *q)
 {
 struct qentry_struct *qe;
-
-     if (q->tail == NULL){
+// Unqueue from head
+     if (q->head == NULL){
         return(NULL);
         }
-     qe = q->tail;
-     q->tail = qe->prev;
-     if (q->tail == NULL){
-        q->head = q->tail;
-        }
+     qe = q->head;
+     q->head = qe->next;
      qe->next = NULL;
      qe->prev = NULL;
      return(qe);
 
 }
-
-

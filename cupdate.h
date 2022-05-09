@@ -12,7 +12,7 @@ FsFile vfile;
   if (vfile){
      vfile.read((uint8_t * )versionstr,31);
      vfile.close();
-     log(versionstr);
+     //log(versionstr);
      } else {
      strcpy(versionstr,"-1");
      }
@@ -210,12 +210,14 @@ void start_content_update()
 void remote_version_check(void* optParm, AsyncHTTPSRequest* request, int readyState)
 {
   (void) optParm;
+  char message[256];
 
+  
   if (readyState == readyStateDone)
   {
     remote_version = request->responseText().toInt();
-    Serial.printf("Remote Version: %d\n",remote_version);
-    Serial.printf("Local Version: %d\n",local_version);
+    sprintf(message,"Remote Content Version: %d",remote_version);
+    log(message);
     request->setDebug(false);
     if (local_version < remote_version){
        log("Content Update Needed - Starting");
@@ -227,6 +229,7 @@ void remote_version_check(void* optParm, AsyncHTTPSRequest* request, int readySt
 // Start the content update process
 void content_check()
 {
+char message[256];
     
     log("Getting Remote Version");
     sendHttpRequest("https://raw.githubusercontent.com/glennswest/i2cgateha/main/contents/.version",remote_version_check);
