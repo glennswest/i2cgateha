@@ -8,8 +8,8 @@ AsyncClient *client_tcp = new AsyncClient;
 
 #define CST -21600
 
-#define TO_UNIX_EPOCH 1062763952UL 
-#define SECONDS_PER_YEAR  31556926
+#define TO_UNIX_EPOCH 393884935 
+#define SECONDS_PER_YEAR  31556952
 
 void onTimePacket(void *arg, AsyncClient *client, struct pbuf *pb)
 {
@@ -23,7 +23,7 @@ char stime[64];
 char message[256];
 unsigned long nist_to_linux_time;
   
-  nist_to_linux_time =  SECONDS_PER_YEAR * 70; 
+ // nist_to_linux_time =  SECONDS_PER_YEAR * 70; 
   log("time.nist.gov responded");
   memcpy(&nist_network_time,(char *)&pb->payload,4);
   timein = (unsigned char *)&nist_network_time;
@@ -39,36 +39,11 @@ unsigned long nist_to_linux_time;
   sprintf(message,"Nist Local Time: %lu(%4.4x)",nist_local_time,nist_local_time);
   log(message);
 
-  ntptime = nist_local_time;  
- 
-  // Convert to Unix/Linux EPOCH
-  ntptime = ntptime - nist_to_linux_time;
-  sprintf(message,"Linux Epoch Time: %lu(%4.4x)",ntptime,ntptime);
-  log(message);
-   
-  //ntptime = ntptime + CST;
-  rtc.setTime(ntptime);
-  
- 
- rtc.getDateTime().toCharArray(stime,64);
- sprintf(message,"NTP Time: %s", stime);
- log(message);
- time_data_needed = 0;
-}
+   // Convert to Unix/Linux EPOCH
+  //ntptime = nist_local_time + nist_to_linux_time;
+  ntptime = nist_local_time - TO_UNIX_EPOCH;
 
-void handleTimeData(void *arg, AsyncClient *client, void *data, size_t len)
-{
-unsigned int ntptime;
-char stime[64];
-char message[256];
   
-  log("time.nist.gov responded");
-  memcpy((char *)&ntptime,data,4);
- 
-  //sprintf(message,"NTP Epoch Time: %lu(%4.4x)",ntptime,ntptime);
-  //log(message);
-  // Convert to Unix/Linux EPOCH
-  ntptime = ntptime + TO_UNIX_EPOCH;
   sprintf(message,"Linux Epoch Time: %lu(%4.4x)",ntptime,ntptime);
   log(message);
    
@@ -89,6 +64,8 @@ void onTimeConnect(void *arg, AsyncClient *client)
 }
 
 
+void update_rtc();
+
 void onTimeDisconnect(void *arg, AsyncClient *client)
 {
  int idx;
@@ -98,14 +75,15 @@ void onTimeDisconnect(void *arg, AsyncClient *client)
   char stime[64];
     
    log("time.nist.gov disconnected");
- 
+   if (time_data_needed == 1){
+       update_rtc();
+       }
    //client_tcp->close();
    //if (time_data_needed == 1){
    //   log("time.nist.gov failed");
    //    client->connect("time.nist.gov", 37);
    //    }
 }
-
 
 void update_rtc(){
   time_data_needed = 1;
@@ -118,5 +96,7 @@ void update_rtc(){
   client_tcp->connect("time.nist.gov", 37);
   client_tcp->close();
 }
+
+
 
         
