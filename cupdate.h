@@ -200,6 +200,7 @@ void get_content_list(void* optParm, AsyncHTTPSRequest* request, int readyState)
    }
 }
 
+
 void start_content_update()
 {
     log("Getting List of Updated Content");
@@ -216,6 +217,7 @@ void remote_version_check(void* optParm, AsyncHTTPSRequest* request, int readySt
   if (readyState == readyStateDone)
   {
     remote_version = request->responseText().toInt();
+    
     sprintf(message,"Remote Content Version: %d",remote_version);
     log(message);
     request->setDebug(false);

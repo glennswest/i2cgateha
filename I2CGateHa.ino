@@ -5,6 +5,7 @@
 #include <sdios.h>
 #include <SdFat.h>
 #include <ESP32Time.h>
+#include "time.h"
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
@@ -110,6 +111,7 @@ TimerHandle_t displayTimer;
 #include "thermocouple.h"
 #include "relay.h"
 #include "cupdate.h"
+#include "ntpupdate.h"
 
 const char* ssid = "gswlair";
 const char* password = "0419196200";
@@ -126,6 +128,7 @@ void WiFiEvent(WiFiEvent_t event) {
   
   switch (event) {
     case SYSTEM_EVENT_STA_GOT_IP:
+      update_rtc();
       log("WiFi connected");
       sprintf(message,"IP address: %s",WiFi.localIP().toString());
       log(message);
@@ -221,6 +224,7 @@ void onMqttConnect(bool sessionPresent) {
 
   log("Connected to MQTT.");
 
+  
   if (scan_needed == 1) {
      log("Starting scan of i2c");
      scanswitch();
