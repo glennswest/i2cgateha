@@ -106,6 +106,9 @@ TimerHandle_t mqttReconnectTimer;
 TimerHandle_t wifiReconnectTimer;
 TimerHandle_t displayTimer;
 
+static unsigned long linuxtime;
+static int rtc_set_needed = 0;
+
 #include "logging.h"
 #include "switch.h"
 #include "thermocouple.h"
@@ -128,9 +131,12 @@ void WiFiEvent(WiFiEvent_t event) {
   
   switch (event) {
     case SYSTEM_EVENT_STA_GOT_IP:
-      update_rtc();
       log("WiFi connected");
       sprintf(message,"IP address: %s",WiFi.localIP().toString());
+      log(message);
+      sprintf(message,"Gateway: %s",WiFi.gatewayIP().toString());
+      log(message);
+      sprintf(message,"DNS: %s",WiFi.dnsIP(0).toString());
       log(message);
       sprintf(message,"RSSI: %d",WiFi.RSSI());
       log(message);
@@ -229,10 +235,11 @@ void onMqttConnect(bool sessionPresent) {
      log("Starting scan of i2c");
      scanswitch();
      log("Scan Complete");
-     content_check();
+     //content_check();
      timer.every(5000, check_temp_sensors);
      scan_needed = 0;
      server.begin();
+     update_rtc();
      }
 }
 
@@ -415,7 +422,19 @@ void setup(){
 
 
 void loop() {
+time_t now;
+tm *localtm;
+char message[256];
+
   timer.tick();
   //epdupdate();
-  
+  if (rtc_set_needed == 1){
+      // RTC update is really slow, so have to do in mainline to avoid watchdog
+      rtc_set_needed = 0;
+      now = (time_t)linuxtime;
+      localtm = localtime(&now);     
+      sprintf(message,"Local Time: %s",asctime(localtm));
+      log(message);       
+      //rtc.setTime(linuxtime);
+      }
 }

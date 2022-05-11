@@ -26,26 +26,28 @@ void sendHttpRequest(char *theURL,void (*pFunc)(void* optParm, AsyncHTTPSRequest
   static bool requestOpenResult;
   if (request.readyState() == readyStateUnsent || request.readyState() == readyStateDone)
   {
-    request.setTimeout(60);
+    request.setTimeout(100000);
     request.onReadyStateChange(pFunc);
-    //request.setDebug(true);
+    request.setDebug(true);
     requestOpenResult = request.open("GET", theURL);
     
     if (requestOpenResult)
     {
       // Only send() if open() returns true, or crash
-      Serial.println("Sending request");
-      Serial.println(theURL);
+      //Serial.println("Sending request");
+      //Serial.println(theURL);
       request.send();
     }
     else
     {
-      Serial.println("Can't send bad request");
+      log("Can't send bad request");
+      log(theURL);
     }
   }
   else
   {
-    Serial.println("Can't send request");
+    log("Can't send request");
+    log(theURL);
   }
 }
 

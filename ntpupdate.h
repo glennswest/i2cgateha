@@ -1,100 +1,80 @@
-const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = -21600;
-const int   daylightOffset_sec = 3600;
 
-static int time_data_needed = 0;
-
-AsyncClient *client_tcp = new AsyncClient;
-
-#define CST -21600
-
-#define TO_UNIX_EPOCH 393884935 
-#define SECONDS_PER_YEAR  31556952
-
-void onTimePacket(void *arg, AsyncClient *client, struct pbuf *pb)
+void process_time_update(void* optParm, AsyncHTTPSRequest* request, int readyState)
 {
-unsigned int nist_network_time;
-unsigned int nist_local_time;
-unsigned char *timeout;
-unsigned char *timein;
-
-unsigned int ntptime;
-char stime[64];
-char message[256];
-unsigned long nist_to_linux_time;
+  (void) optParm;
+  int tsize;
+  //char filename[64];
+  char *work;
+  char *tptr;
+  //char *fptr;
+  char *eptr;
+  String worldtime;
   
- // nist_to_linux_time =  SECONDS_PER_YEAR * 70; 
-  log("time.nist.gov responded");
-  memcpy(&nist_network_time,(char *)&pb->payload,4);
-  timein = (unsigned char *)&nist_network_time;
-  timeout = (unsigned char *)&nist_local_time;
-
-  *(timeout + 0) = *(timein+3);
-  *(timeout + 1) = *(timein+2);
-  *(timeout + 2) = *(timein+1);
-  *(timeout + 3) = *(timein+0);
-
-  //sprintf(message,"Nist Network Time: %lu(%4.4x)",nist_network_time,nist_network_time);
-  //log(message);
-  sprintf(message,"Nist Local Time: %lu(%4.4x)",nist_local_time,nist_local_time);
-  log(message);
-
-   // Convert to Unix/Linux EPOCH
-  //ntptime = nist_local_time + nist_to_linux_time;
-  ntptime = nist_local_time - TO_UNIX_EPOCH;
-
-  
-  sprintf(message,"Linux Epoch Time: %lu(%4.4x)",ntptime,ntptime);
-  log(message);
-   
-  //ntptime = ntptime + CST;
-  rtc.setTime(ntptime);
-  
- 
- rtc.getDateTime().toCharArray(stime,64);
- sprintf(message,"NTP Time: %s", stime);
- log(message);
- time_data_needed = 0;
-}
-
-void onTimeConnect(void *arg, AsyncClient *client)
-{
-  log("time.nist.gov connected");
- 
-}
-
-
-void update_rtc();
-
-void onTimeDisconnect(void *arg, AsyncClient *client)
-{
- int idx;
-  char work[256];
-  char message[256];
-  unsigned long ntptime;
-  char stime[64];
-    
-   log("time.nist.gov disconnected");
-   if (time_data_needed == 1){
-       update_rtc();
+  if (readyState == readyStateDone)
+  {
+    //Serial.println(request->responseLongText());
+    log("worldtimeapi responded");
+    worldtime = request->responseText();
+    tsize = worldtime.length();
+    Serial.printf("Size = %d",tsize);
+    if (tsize == 0){
+       log("worldtimeapi empty");
+       return;
        }
-   //client_tcp->close();
-   //if (time_data_needed == 1){
-   //   log("time.nist.gov failed");
-   //    client->connect("time.nist.gov", 37);
-   //    }
+    if (tsize > 4096){
+       log("worldtimeapi invalid response size");
+       return;
+       } 
+    work = (char *)malloc(tsize+10);   
+    worldtime.toCharArray(work,tsize);   
+    
+    Serial.print(work);
+    //request->responseText().toCharArray(work,tsize);
+    //work[tsize] = 0; // Force Termination
+    log("Hummmm");
+    tptr = strstr(work,"unixtime");
+    if (tptr == NULL){
+       log("worldtimeapi invalid time response");
+       free(work);
+       return;
+       }
+    tptr = tptr + 10;
+    eptr = strchr(tptr,'\n');
+    if (eptr == NULL){
+       log("worldtimeapi end not found");
+       free(work);
+       return;
+       }     
+    *eptr = 0;
+   
+    linuxtime = atoi(tptr);
+    Serial.println(linuxtime);
+    rtc_set_needed = 1;
+    free(work);
+    
+   }
+}
+
+void start_time_update()
+{
+static char theurl[256];
+
+    log("worldtimeapi update requested");
+    strcpy(theurl,"https://worldtimeapi.org/api/ip.txt");
+    sendHttpRequest(theurl,process_time_update);
+    //sendHttpRequest(theurl,requestCB);
+}
+
+
+bool timerupdateneeded(void *ttimer)
+{
+    start_time_update();
+    return(true);
 }
 
 void update_rtc(){
-  time_data_needed = 1;
-  //client_tcp->onData(handleTimeData, client_tcp);
-  client_tcp->onPacket(onTimePacket, client_tcp);
-  client_tcp->onConnect(onTimeConnect, client_tcp);
-  client_tcp->onDisconnect(onTimeDisconnect, client_tcp);
-  
-  //client_tcp->connect("time.nist.gov", 13);
-  client_tcp->connect("time.nist.gov", 37);
-  client_tcp->close();
+  log("Scheduluing Time Update");
+  timer.in(7000, timerupdateneeded);
 }
 
 
