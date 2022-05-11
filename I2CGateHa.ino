@@ -131,6 +131,7 @@ void WiFiEvent(WiFiEvent_t event) {
   
   switch (event) {
     case SYSTEM_EVENT_STA_GOT_IP:
+      update_rtc();
       log("WiFi connected");
       sprintf(message,"IP address: %s",WiFi.localIP().toString());
       log(message);
@@ -239,7 +240,6 @@ void onMqttConnect(bool sessionPresent) {
      timer.every(5000, check_temp_sensors);
      scan_needed = 0;
      server.begin();
-     update_rtc();
      }
 }
 
@@ -427,14 +427,4 @@ tm *localtm;
 char message[256];
 
   timer.tick();
-  //epdupdate();
-  if (rtc_set_needed == 1){
-      // RTC update is really slow, so have to do in mainline to avoid watchdog
-      rtc_set_needed = 0;
-      now = (time_t)linuxtime;
-      localtm = localtime(&now);     
-      sprintf(message,"Local Time: %s",asctime(localtm));
-      log(message);       
-      //rtc.setTime(linuxtime);
-      }
 }

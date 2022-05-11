@@ -58,6 +58,9 @@ int idx;
 struct log_entry_struct *le;   
 char thetime[64];
 String myrtctime;
+time_t curtime;
+struct tm *loc_time;
+char buf[150];
 
   M5.EPD.Clear(false);
   canvas.setTextSize(4); //Set the text size.
@@ -75,10 +78,12 @@ String myrtctime;
         }
      le = (struct log_entry_struct *)le->qe.prev;
      }  
-  myrtctime = rtc.getTime();
-  myrtctime.toCharArray(thetime,50);
-  
-  canvas.drawString(thetime, 25, MAX_LINE);   
+  //myrtctime = rtc.getTime();
+  //myrtctime.toCharArray(thetime,50);
+
+  time (&curtime);
+  loc_time = localtime (&curtime);
+  canvas.drawString(asctime (loc_time), 25, MAX_LINE);   
   canvas.pushCanvas(0, 0, UPDATE_MODE_DU); //Update the screen.
   return(true); 
 }
