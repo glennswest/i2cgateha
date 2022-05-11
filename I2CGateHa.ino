@@ -372,12 +372,16 @@ void websetup()
 
 
 void setup(){
+char message[256];
+
 
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   log_setup();
   delay(2);
   
   M5.begin();   //Init M5Paper.
+  setup_rtc();
+  
   M5.EPD.SetRotation(90);   //Set the rotation of the display.
   M5.EPD.Clear(true);  //Clear the screen.
   canvas.createCanvas(540, 960);  //Create a canvas.  创建画布

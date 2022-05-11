@@ -1,3 +1,38 @@
+void setup_rtc(void)
+{
+rtc_time_t RTCtime;
+rtc_date_t RTCdate;
+char message[256];
+tm localtm;
+unsigned long thetime;
+timeval tv;
+timezone tz;
+timezone tz_utc = {0,0};
+  
+  M5.RTC.getTime(&RTCtime);
+  M5.RTC.getDate(&RTCdate);
+  
+  
+  localtm.tm_sec  = RTCtime.sec;
+  localtm.tm_min  = RTCtime.min;
+  localtm.tm_hour = RTCtime.hour;
+  localtm.tm_mday = RTCdate.day;
+  localtm.tm_mon  = RTCdate.mon;
+  localtm.tm_year = RTCdate.year;
+  
+  
+  thetime = mktime(&localtm);  
+  sprintf(message, "RTC Date: %02d/%02d/%02d Time: %02d:%02d:%02d (%i)",
+            RTCdate.mon, RTCdate.day, RTCdate.year, 
+            RTCtime.hour, RTCtime.min, RTCtime.sec,
+            thetime);          
+  tv.tv_sec = time_t(thetime);
+  tz.tz_minuteswest = 0;
+  tz.tz_dsttime = 0;
+  settimeofday(&tv,&tz_utc);
+  log(message);         
+}
+
 //{"abbreviation":"CDT","client_ip":"174.80.45.95","datetime":"2022-05-10T21:18:24.928638-05:00","day_of_week":2,"day_of_year":130,"dst":true,
 //"dst_from":"2022-03-13T08:00:00+00:00","dst_offset":3600,"dst_until":"2022-11-06T07:00:00+00:00","raw_offset":-21600,"timezone":"America/Chicago",
 //"unixtime":1652235504,"utc_datetime":"2022-05-11T02:18:24.928638+00:00","utc_offset":"-05:00","week_number":19}
@@ -65,7 +100,7 @@ void process_time_update(void* optParm, AsyncHTTPSRequest* request, int readySta
     tz.tz_minuteswest = 0;
     tz.tz_dsttime = 0;
     settimeofday(&tv,&tz_utc);
-    rtc.setTime(linuxtime);
+    //rtc.setTime(linuxtime);
     free(work);
     
    }
