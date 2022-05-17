@@ -380,7 +380,7 @@ char message[256];
   delay(2);
   
   M5.begin();   //Init M5Paper.
-  setup_rtc();
+ 
   
   M5.EPD.SetRotation(90);   //Set the rotation of the display.
   M5.EPD.Clear(true);  //Clear the screen.
@@ -388,9 +388,12 @@ char message[256];
   
   M5.RTC.begin();  //Init the RTC.  初始化 RTC
   Wire1.begin(25, 32);
+
+  setup_rtc();
   
   Serial.begin(115200);
   log("Booting");
+  epdupdate(NULL);
   
   initSDCard();
 
@@ -419,11 +422,6 @@ char message[256];
   websetup();
   
 }
-
-
-
-
-
 
 void loop() {
 time_t now;

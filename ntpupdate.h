@@ -33,6 +33,25 @@ timezone tz_utc = {0,0};
   log(message);         
 }
 
+void set_rtc(struct tm *ttm)
+{
+
+
+rtc_time_t RTCtime;
+rtc_date_t RTCdate;
+
+ 
+  RTCtime.hour = ttm->tm_hour;
+  RTCtime.min = ttm->tm_min;
+  RTCtime.sec = ttm->tm_sec;
+  M5.RTC.setTime(&RTCtime);
+
+  RTCdate.year = ttm->tm_year + 1900;
+  RTCdate.mon = ttm->tm_mon + 1;
+  RTCdate.day = ttm->tm_mday;
+  M5.RTC.setDate(&RTCdate);
+}
+
 //{"abbreviation":"CDT","client_ip":"174.80.45.95","datetime":"2022-05-10T21:18:24.928638-05:00","day_of_week":2,"day_of_year":130,"dst":true,
 //"dst_from":"2022-03-13T08:00:00+00:00","dst_offset":3600,"dst_until":"2022-11-06T07:00:00+00:00","raw_offset":-21600,"timezone":"America/Chicago",
 //"unixtime":1652235504,"utc_datetime":"2022-05-11T02:18:24.928638+00:00","utc_offset":"-05:00","week_number":19}
@@ -100,7 +119,7 @@ void process_time_update(void* optParm, AsyncHTTPSRequest* request, int readySta
     tz.tz_minuteswest = 0;
     tz.tz_dsttime = 0;
     settimeofday(&tv,&tz_utc);
-    //rtc.setTime(linuxtime);
+    set_rtc(localtm);    
     free(work);
     
    }
@@ -113,7 +132,6 @@ static char theurl[256];
     log("worldtimeapi update requested");
     strcpy(theurl,"https://worldtimeapi.org/api/ip.json");
     sendHttpRequest(theurl,process_time_update);
-    //sendHttpRequest(theurl,requestCB);
 }
 
 
