@@ -236,7 +236,7 @@ void onMqttConnect(bool sessionPresent) {
      log("Starting scan of i2c");
      scanswitch();
      log("Scan Complete");
-     //content_check();
+     content_check();
      timer.every(5000, check_temp_sensors);
      scan_needed = 0;
      server.begin();
@@ -380,13 +380,13 @@ char message[256];
   delay(2);
   
   M5.begin();   //Init M5Paper.
- 
+  M5.RTC.begin();  //Init the RTC.  初始化 RTC
   
   M5.EPD.SetRotation(90);   //Set the rotation of the display.
   M5.EPD.Clear(true);  //Clear the screen.
   canvas.createCanvas(540, 960);  //Create a canvas.  创建画布
   
-  M5.RTC.begin();  //Init the RTC.  初始化 RTC
+ 
   Wire1.begin(25, 32);
 
   setup_rtc();
