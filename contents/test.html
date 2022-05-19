@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="tabulator.min.js"></script>
+    <style>
+        .toggle {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Sed maxime tempora doloribus sequi quod in non explicabo, amet officia quo vitae! Non perspiciatis cum in omnis debitis dolor nulla voluptatum optio ipsum. Rerum, atque.</div>
+    
+    
+
+    <button onclick="loadHome()">me</button>
+    <button onclick="loadPage()">Check</button>
+    <div class="toggle" id="SystemSettings"></div>
+
+    <script>
+        async function fetchasHtml(url) {
+            return await (await fetch(url)).text();
+        }
+
+        async function loadHome() {
+            const setting = document.getElementById('SystemSettings')
+            setting.classList.remove('toggle')
+            const contentDiv = document.getElementById('test');
+            contentDiv.innerHTML = await fetchasHtml("overview.html")
+        }
+
+        async function loadPage() {
+            const setting = document.getElementById('SystemSettings')
+            setting.classList.remove('toggle')
+            const contentDiv = document.getElementById('test');
+            contentDiv.innerHTML = await fetchasHtml("over.html")
+        }
+    </script>
+    <script type="text/javascript">
+        var table = new Tabulator("#SystemSettings", {
+            autoResize: false,
+            height: 220,
+            ajaxURL: "data/systemsetting.json",
+            columns: [
+                { title: "Name", field: "name", width: 150 },
+                { title: "Value", field: "val", editor: "input", width: 150 }
+            ],
+        });
+        table.on('cellEdited', function (cell) {
+            // This callback is called any time a cell is edited.
+            var xdata = cell.getData();
+            ajaxConfig: "POST"
+            var ajaxConfig = {
+                method: "post" //set request type to Position
+            };
+            table.setData("data/systemsetting.json?update", xdata, ajaxConfig);
+        });
+    </script>
+</body>
+
+</html>
