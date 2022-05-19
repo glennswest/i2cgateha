@@ -24,15 +24,15 @@
 
 <body>
     
-        <div id="SystemSettings"></div>
+        <div id="Updates"></div>
     
     <script type="text/javascript">
-        var table = new Tabulator("#SystemSettings", {
+        var table = new Tabulator("#Updates", {
             autoResize: false,
             height: 220,
             ajaxURL: "data/systemsetting.json",
             columns: [
-                { title: "Name", field: "name", width: 150 },
+                { title: "Updates", field: "name", width: 150 },
                 { title: "Value", field: "val", editor: "input", width: 150 }
             ],
         });
