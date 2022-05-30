@@ -143,7 +143,7 @@ bool timerupdateneeded(void *ttimer)
 
 void update_rtc(){
   log("Scheduluing Time Update");
-  timer.in(1, timerupdateneeded);
+ // timer.in(1, timerupdateneeded);
 }
 
 

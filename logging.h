@@ -92,8 +92,9 @@ void logq(char *message)
 {
 struct log_entry_struct *hle;
 struct log_entry_struct *le;
-
-  Serial.println(message);
+int tsize;
+time_t curtime;
+  
   hle = (struct log_entry_struct *)logging_q.tail;
   if (hle == NULL){
      Serial.println("Invalid Logging Q State");
@@ -108,8 +109,14 @@ struct log_entry_struct *le;
      }
   le = (struct log_entry_struct *)unqueue(&logging_q);
   le->repeats = 1;
-  le->logtime = rtc.getEpoch();
-  strcpy(le->log_text,message);
+  time (&curtime);
+  le->logtime = curtime;
+  tsize = strlen(message);
+  if (tsize > 200){
+    tsize = 200;
+    }
+  strncpy(le->log_text,message,tsize);
+  le->log_text[tsize] = 0;
   queue(&logging_q,&le->qe);  
 }
 
@@ -117,13 +124,14 @@ void log(String themessage)
 {
   char Buf[250];
 
-  themessage.toCharArray(Buf, 250);
+  themessage.toCharArray(Buf, 210);
   log(Buf);
 }
 
 void log(char *message)
 {
   //epdlog(message);
+  Serial.println(message);
   logq(message);
    
 }

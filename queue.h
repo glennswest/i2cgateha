@@ -41,8 +41,12 @@ struct qentry_struct *qe;
      if (q->head == NULL){
         return(NULL);
         }
+
      qe = q->head;
      q->head = qe->next;
+     if (q->head == NULL){
+         q->tail = NULL;
+        }
      qe->next = NULL;
      qe->prev = NULL;
      return(qe);

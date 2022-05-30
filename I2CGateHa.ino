@@ -1,4 +1,3 @@
-
 #define SD_FAT_TYPE 3     // Get us Fat32/ExFat
 #define SPI_SPEED SD_SCK_MHZ(4)
 #include <SdFatConfig.h>
@@ -22,7 +21,7 @@ ESP32Time rtc;
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
-#include <AsyncTCP.h>
+//#include <AsyncTCP.h>
 //#include <AsyncTCP_SSL.h>
 #include "queue.h"
 
@@ -131,7 +130,7 @@ void WiFiEvent(WiFiEvent_t event) {
   
   switch (event) {
     case SYSTEM_EVENT_STA_GOT_IP:
-      update_rtc();
+      //update_rtc();
       log("WiFi connected");
       sprintf(message,"IP address: %s",WiFi.localIP().toString());
       log(message);
@@ -141,7 +140,8 @@ void WiFiEvent(WiFiEvent_t event) {
       log(message);
       sprintf(message,"RSSI: %d",WiFi.RSSI());
       log(message);
-      connectToMqtt();
+      xTimerStart(mqttReconnectTimer, 100);
+      //connectToMqtt();
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
       log("WiFi lost connection");
@@ -236,7 +236,7 @@ void onMqttConnect(bool sessionPresent) {
      log("Starting scan of i2c");
      scanswitch();
      log("Scan Complete");
-     content_check();
+    // content_check();
      timer.every(5000, check_temp_sensors);
      scan_needed = 0;
      server.begin();
@@ -294,17 +294,8 @@ void connectToWifi() {
   log("Connecting to Wi-Fi...");
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
- // delay(100);
-
  
-  WiFi.begin(ssid, password);
-  //while (WiFi.status() != WL_CONNECTED) {
-  //  Serial.print('.');
-  //  delay(1000);
-  //}
-  //Serial.println(WiFi.localIP());
-  //Serial.print("RRSI: ");
-  //Serial.println(WiFi.RSSI()); 
+  WiFi.begin(ssid, password); 
 }
 
 void connectToMqtt() {
