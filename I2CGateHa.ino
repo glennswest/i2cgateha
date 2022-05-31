@@ -1,5 +1,6 @@
 #define SD_FAT_TYPE 3     // Get us Fat32/ExFat
 #define SPI_SPEED SD_SCK_MHZ(4)
+
 #include <SdFatConfig.h>
 #include <sdios.h>
 #include <SdFat.h>
@@ -9,7 +10,7 @@
 #include "soc/rtc_cntl_reg.h"
 
 SdFs sd;
-FsFile file;
+//FsFile file;
 
 ESP32Time rtc;
 
@@ -63,6 +64,7 @@ AsyncHTTPSRequest request;
 
 auto timer = timer_create_default();
 
+int vfile_busy = 0;
 int scan_needed = 1;
 int local_version;  // Version on SD card of content
 int remote_version; // Version on github
@@ -115,16 +117,20 @@ static int rtc_set_needed = 0;
 #include "cupdate.h"
 #include "ntpupdate.h"
 
+
 const char* ssid = "gswlair";
 const char* password = "0419196200";
 
 const char* mqtt_server = "192.168.1.248";
 
-
+TaskHandle_t WebServerTask;
 
 AsyncWebServer  server(80);
 String header;
 char message[256];
+
+#include "webserver.h"
+
 
 void WiFiEvent(WiFiEvent_t event) {
   
@@ -303,62 +309,6 @@ void connectToMqtt() {
   mqttClient.connect();
 }
 
-int  readbigfatsd(String thepath,uint8_t *buffer, size_t index,int maxlen)
-{
-FsFile vfile;
-char message[256];
-int thesize = 0;
-
-  sprintf(message,"%s: Index: %d MaxLen: %d\n",thepath,index,maxlen);
-  Serial.print(message);
-  if (maxlen > 8196){
-     maxlen = 8196;
-     }
-  
-  vfile.open((char *)thepath.c_str(),O_RDWR);
-  if (vfile){
-     vfile.seekSet(index);
-     thesize = vfile.read(buffer,maxlen);
-     vfile.close();
-     }
-  return(thesize);
-}
-
-bool handleStaticFile(AsyncWebServerRequest *request) {
-  String path = request->url();
- 
-  if (path.endsWith("/")) path += F("index.html");
-  
-  String contentType = request->contentType();
-  String pathWithGz = path + ".gz";
-
-  if (sd.exists(pathWithGz) || sd.exists(path)){
-    bool gzipped = false;
-    if (sd.exists(pathWithGz)) {
-        gzipped = true;
-        path += ".gz";
-        }    
-    
-    AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [path](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {      
-        return readbigfatsd(path,buffer,index,maxLen);
-    });
-    response->addHeader("Server","ESP Async Web Server");
-    request->send(response);
-    return true;
-    }
-  
-  return false;
-}
-
-
-void websetup()
-{
-   server.onNotFound([](AsyncWebServerRequest *request) {
-      if (handleStaticFile(request)) return; 
-      request->send(404);
-      });
-  server.begin();
-}
 
 
 
@@ -388,6 +338,10 @@ char message[256];
   
   initSDCard();
 
+   //disableCore0WDT();
+   //disableCore1WDT();
+   //disableLoopWDT();
+
   epdupdate(NULL);
   timer.every(500, epdupdate);
  
@@ -409,8 +363,17 @@ char message[256];
   connectToWifi();
   
   log((char *)"Ready");
+
+  xTaskCreatePinnedToCore(
+      &webtask, /* Function to implement the task */
+      "WebServer", /* Name of the task */
+      20000,  /* Stack size in words */
+      NULL,  /* Task input parameter */
+      0,  /* Priority of the task */
+      &WebServerTask,  /* Task handle. */
+      0); /* Core where the task should run */
   
-  websetup();
+  //websetup();
   
 }
 

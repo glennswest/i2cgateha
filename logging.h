@@ -122,7 +122,7 @@ time_t curtime;
 
 void log(String themessage)
 {
-  char Buf[250];
+  static char Buf[250];
 
   themessage.toCharArray(Buf, 210);
   log(Buf);
