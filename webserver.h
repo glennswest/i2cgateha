@@ -69,14 +69,6 @@ volatile bool seekok;
 bool handleStaticFile(AsyncWebServerRequest *request) {
 struct webreq_entry *webr;
 
-  if (vfile_busy == 1){
-     webr = (struct webreq_entry *)unqueue(&webreq_free);
-     webr->request = request;
-     queue(&webreq_busy,&webr->qe);     
-     Serial.println("Web Request Deferred");
-     return(false);
-     }      
-  vfile_busy = 1;
   String xpath = request->url();
   Serial.println(xpath); 
   
@@ -92,23 +84,22 @@ struct webreq_entry *webr;
       xpath = xpath + F(".gz");
       if (sd.exists(xpath) == false){
           request->send(404);
-          vfile_busy = 0;
           return(false);
           } 
      }
   
     //Serial.println(xpath);   
-    AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [xpath](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {      
-        return readbigfatsd(xpath,buffer,index,maxLen);
-    });
-    //response->addHeader("Server","ESP Async Web Server");
-    //response->addHeader("Content-Disposition", "attachment; filename=" + xpath);
+  
+    
     response->addHeader("Cache-Control", "no-cache");
     response->addHeader("Access-Control-Allow-Origin", "*");
     request->send(response);
+
+    webr = (struct webreq_entry *)unqueue(&webreq_free);
+    webr->request = request;
+    queue(&webreq_busy,&webr->qe);     
+    Serial.println("Web transmit Deferred");
     return true;
-  
-  return false;
 }
 
 
@@ -127,11 +118,14 @@ AsyncWebServerRequest *request;
   while(1){
     if (webreq_busy.head != NULL){
        if (vfile_busy == 0){
+           vfile_busy = 1;
            webr = (struct webreq_entry *)unqueue(&webreq_busy);
            request = webr->request;
            webr->request = NULL;
            queue(&webreq_free,&webr->qe);  
-           thestatus = handleStaticFile(request); 
+           AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [xpath](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {      
+                                                                            return readbigfatsd(xpath,buffer,index,maxLen);
+                                                                            }); 
        }
     }
     delay(100);
