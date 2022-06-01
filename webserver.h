@@ -45,7 +45,7 @@ volatile bool seekok;
 
 
 bool handleStaticFile(AsyncWebServerRequest *request) {
-
+boolean gzipped;
 
   String xpath = request->url();
   //Serial.println(xpath); 
@@ -57,8 +57,10 @@ bool handleStaticFile(AsyncWebServerRequest *request) {
   
 
   if (sd.exists(xpath)){
+    gzipped = false;
     //Serial.println("Path Exists");
     } else {
+      gzipped = true;
       xpath = xpath + F(".gz");
       if (sd.exists(xpath) == false){
           request->send(404);
@@ -72,7 +74,11 @@ bool handleStaticFile(AsyncWebServerRequest *request) {
         return readbigfatsd(xpath,buffer,index,maxLen);
     });
     
-    response->addHeader("Cache-Control", "no-cache");
+    //response->addHeader("Cache-Control", "no-cache");
+    if (gzipped){
+      response->addHeader("Content-Encoding", "gzip");
+      }
+    response->addHeader("Cache-Control", "max-age=31536000, immutable, public");
     response->addHeader("Access-Control-Allow-Origin", "*");
     request->send(response);
 

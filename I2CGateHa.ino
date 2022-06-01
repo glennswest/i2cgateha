@@ -161,7 +161,7 @@ void initSDCard() {
 char message[256];
 const int SD_CS_PIN = 4;
 #define SPI_CLOCK SD_SCK_MHZ(25)
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SPI_CLOCK)
+#define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SPI_CLOCK)
  
   if (!sd.begin(SD_CONFIG)) {
        log("SD Card Failed to Initialise");
