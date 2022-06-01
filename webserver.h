@@ -1,26 +1,3 @@
-struct webreq_entry {
-       struct qentry_struct qe;
-       AsyncWebServerRequest *request;
-       };
-
-struct queue_struct webreq_free;
-struct queue_struct webreq_busy;
-
-void setup_webreq_queue()
-{
-int idx;
-struct webreq_entry *webr;
-
-      queue_init(&webreq_free);
-      queue_init(&webreq_busy);
-      for(idx=0;idx < 20;idx++){
-             webr = (struct webreq_entry *) malloc(sizeof(struct webreq_entry));
-             queue(&webreq_free,&webr->qe);        
-             }
-
-}
-
-
 int  readbigfatsd(String thepath,uint8_t *buffer, size_t index,int maxlen)
 {
 FsFile vfile;
@@ -66,6 +43,7 @@ volatile bool seekok;
   return(thesize);
 }
 
+
 bool handleStaticFile(AsyncWebServerRequest *request) {
 struct webreq_entry *webr;
 
@@ -89,16 +67,15 @@ struct webreq_entry *webr;
      }
   
     //Serial.println(xpath);   
-  
+
+    AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [xpath](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {      
+        return readbigfatsd(xpath,buffer,index,maxLen);
+    });
     
     response->addHeader("Cache-Control", "no-cache");
     response->addHeader("Access-Control-Allow-Origin", "*");
     request->send(response);
 
-    webr = (struct webreq_entry *)unqueue(&webreq_free);
-    webr->request = request;
-    queue(&webreq_busy,&webr->qe);     
-    Serial.println("Web transmit Deferred");
     return true;
 }
 
@@ -109,25 +86,12 @@ bool thestatus;
 struct webreq_entry *webr;
 AsyncWebServerRequest *request;
   
-   setup_webreq_queue();
    server.onNotFound([](AsyncWebServerRequest *request) {
       if (handleStaticFile(request)) return; 
       //request->send(404);
       });
   server.begin();
   while(1){
-    if (webreq_busy.head != NULL){
-       if (vfile_busy == 0){
-           vfile_busy = 1;
-           webr = (struct webreq_entry *)unqueue(&webreq_busy);
-           request = webr->request;
-           webr->request = NULL;
-           queue(&webreq_free,&webr->qe);  
-           AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [xpath](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {      
-                                                                            return readbigfatsd(xpath,buffer,index,maxLen);
-                                                                            }); 
-       }
-    }
-    delay(100);
+    delay(1000);
   }
 }
