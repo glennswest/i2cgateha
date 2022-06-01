@@ -9,8 +9,8 @@ volatile bool seekok;
   //Serial.print(index);
   //Serial.print(" - ");
   //Serial.println(thepath);
-  if (maxlen > 8192){
-     maxlen = 8192;
+  if (maxlen > 4096){
+     maxlen = 4096;
      }
    
   vfile.open((char *)thepath.c_str(),O_RDWR);
@@ -45,10 +45,10 @@ volatile bool seekok;
 
 
 bool handleStaticFile(AsyncWebServerRequest *request) {
-struct webreq_entry *webr;
+
 
   String xpath = request->url();
-  Serial.println(xpath); 
+  //Serial.println(xpath); 
   
   if (xpath.equals("/")){
      xpath = F("index.html");

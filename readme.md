@@ -22,4 +22,10 @@ The Gateway software runs on a arduino controller, with initial support for a ES
 ##Solved Issues
 1. Need to move to mqtt client to async version to fix connection lost
 
+Stability:
+Need to use:
+https://github.com/brunojoyal/AsyncTCP
+Till below issue is fixed:
+https://github.com/me-no-dev/ESPAsyncWebServer/issues/1167
+
 

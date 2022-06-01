@@ -99,7 +99,7 @@ struct content_entry {
 struct queue_struct dl_q;
 struct content_entry *cur_dl;
 
-const int chipSelect = 4;
+
 M5EPD_Canvas canvas(&M5.EPD);
 
 AsyncMqttClient mqttClient;
@@ -159,8 +159,11 @@ void WiFiEvent(WiFiEvent_t event) {
 
 void initSDCard() {
 char message[256];
+const int SD_CS_PIN = 4;
+#define SPI_CLOCK SD_SCK_MHZ(25)
+#define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SPI_CLOCK)
  
-  if (!sd.begin(chipSelect, SPI_SPEED)) {
+  if (!sd.begin(SD_CONFIG)) {
        log("SD Card Failed to Initialise");
        log("Functionality will be lost");
        return;
@@ -367,13 +370,13 @@ char message[256];
   xTaskCreatePinnedToCore(
       &webtask, /* Function to implement the task */
       "WebServer", /* Name of the task */
-      20000,  /* Stack size in words */
+      40000,  /* Stack size in words */
       NULL,  /* Task input parameter */
       0,  /* Priority of the task */
       &WebServerTask,  /* Task handle. */
       0); /* Core where the task should run */
   
-  //websetup();
+ 
   
 }
 
