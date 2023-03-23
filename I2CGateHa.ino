@@ -309,6 +309,7 @@ void connectToWifi() {
 
 void connectToMqtt() {
   log("Connecting to MQTT...");
+  mqttClient.setCredentials("device","device");
   mqttClient.connect();
 }
 

@@ -144,6 +144,7 @@ void ha_tc_register(char *thename, char *theuid, char *thetype) {
   //sprintf(logb,"Device %s - %s",thetype,thename);
   //log(logb);
   dev["name"]            = thename;
+  dev["object_id"]       = thename;
   sprintf(buf, "%sId", thename);
   dev["unit_of_measurement"] = "°C";
   dev["device_class"] = "temperature";
@@ -161,6 +162,8 @@ void ha_tc_register(char *thename, char *theuid, char *thetype) {
   sprintf(buf, "homeassistant/%s/%s/config", thetype, thename); //char *subject = "homeassistant/switch/i2cgateha-01-01/config";
   //log(buf);
   //log(cconfig);
+  Serial.println("MQTT MSG: " + config);
+
   mqttClient.publish(buf, 0, false, cconfig, csize);
   //delay(100);
 
@@ -221,6 +224,3 @@ bool check_temp_sensors(void *)
   }
   return true;
 }
-
-
-

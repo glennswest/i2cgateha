@@ -56,9 +56,9 @@ void ha_sw_register(char *thename, char *theuid, char *thetype) {
   //log(logb);
   dev["name"]            = thename;
   sprintf(buf, "%sId", thename);
-  //dev["unique_id"]       = buf; // "switch.i2cgateha0101_identify";
+  dev["object_id"]       = thename; // "switch.i2cgateha0101_identify";
   //dev["entity_category"] = thetype; // "switch";
-  //dev["device_class"]  = thetype; // "switch";
+  dev["device_class"]  = thetype; // "switch";
   dev["payload_on"]      = "ON";
   dev["payload_off"]     = "OFF";
 
@@ -70,10 +70,11 @@ void ha_sw_register(char *thename, char *theuid, char *thetype) {
 
   sprintf(buf, "homeassistant/%s/%s/state", thetype, thename);
   dev["state_topic"]     = buf;
+  dev["payload"] = "OFF";
 
   String config = dev.as<String>();
   unsigned int csize = config.length() + 1;
-  //Serial.println("MQTT MSG: " + config);
+  Serial.println("MQTT MSG: " + config);
 
   config.toCharArray(cconfig, csize);
 
@@ -98,7 +99,3 @@ void register_relay(uint8_t port, uint8_t bus, uint8_t addr, uint8_t chan)
   ha_sw_register(thename, theid, "switch");
   send_relay_status(port, bus, addr, chan);
 }
-
-
-
-
